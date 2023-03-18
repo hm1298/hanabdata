@@ -16,13 +16,10 @@ def update_user(username: str):
         
     print(f'Successfully updated all game data for {username}.')
 
-
-
 def update_seed(seed: str):
-    
     print(f'Fetching data for {seed}')
     fetch.fetch_seed(seed)
-    print(f'Completed successfully')
+    print(f'Completed updated {seed} data')
 
 
 def _find_missing_games(username: str):
