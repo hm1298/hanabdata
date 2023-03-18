@@ -16,7 +16,6 @@ def update_user(username: str):
         
     print(f'Successfully updated all game data for {username}.')
 
-def _find_missing_games(username: str):
     data = read.read_games(username)
     parser = parse.UserData(data)
     missing_ids = []
@@ -27,8 +26,9 @@ def _find_missing_games(username: str):
     return missing_ids
 
 def update_seed(seed: str):
-    
     print(f'Fetching data for {seed}')
     fetch.fetch_seed(seed)
     print(f'Completed successfully')
     
+ 
+def _find_missing_games(username: str):

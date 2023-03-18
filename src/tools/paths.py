@@ -1,5 +1,5 @@
 from os import path
-#ROOT_PATH = "C:/Users/bburr/OneDrive/Desktop/Recreational/hanabidata/"
+
 
 def get_user_data_path(username: str):
     return f'src/data/raw/users/{username}.json'
