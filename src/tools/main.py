@@ -1,5 +1,5 @@
-from parse import GameData, generate_user_summary, get_seed_winrate, generate_winrate_summary
-import read
+from tools.parse import GameData, generate_user_summary, get_seed_winrate, generate_winrate_summary
+from tools import read
 
 
 generate_winrate_summary()

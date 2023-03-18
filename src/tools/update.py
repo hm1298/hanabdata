@@ -1,16 +1,12 @@
-import fetch
-import read
-import parse
-import paths
-
-
+from tools import fetch, read, parse, paths
 
 def update_user(username: str):
     print(f'Fetching game list for {username}...')
     fetch.fetch_games(username)
-    print(f'Updated game list. Searching database for missing games...')
-    missing_ids = find_missing_games(username)
+    print(f'Updated list of {username}\'s games. Searching for games without data...')
+    missing_ids = _find_missing_games(username)
     count = len(missing_ids)
+    print(f'{count} of {username}\'s games missing game data')
     print(f'Fetching missing data for {count} games...')
     
     for i, id in enumerate(missing_ids):
@@ -20,8 +16,7 @@ def update_user(username: str):
         
     print(f'Successfully updated all game data for {username}.')
 
-
-def find_missing_games(username: str):
+def _find_missing_games(username: str):
     data = read.read_games(username)
     parser = parse.UserData(data)
     missing_ids = []
@@ -31,15 +26,9 @@ def find_missing_games(username: str):
         missing_ids.append(id)
     return missing_ids
 
-
-def update_seed_data():
-    for i in range(100):
-        seed = f'p2v0s{i + 1}'
-        fetch.fetch_seed(seed)
-
-
-
-if __name__ == '__main__':
-    #username = 'sjdrodge'
-    #update_user(username)
-    update_seed_data()
+def update_seed(seed: str):
+    
+    print(f'Fetching data for {seed}')
+    fetch.fetch_seed(seed)
+    print(f'Completed successfully')
+    

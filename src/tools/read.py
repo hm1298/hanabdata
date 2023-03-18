@@ -1,4 +1,4 @@
-import paths
+from tools import paths
 import json
 import csv
 

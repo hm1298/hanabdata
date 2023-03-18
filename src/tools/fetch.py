@@ -1,7 +1,7 @@
 import json
 import requests
 import os
-import paths
+from tools import paths
 
 
 

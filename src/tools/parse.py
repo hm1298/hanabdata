@@ -1,6 +1,6 @@
 
-from gamestate import GameState as G
-import read
+from tools.gamestate import GameState as G
+from tools import read
 
 class UserData:
 
