@@ -32,7 +32,7 @@ def generate_seed_report(seed : str):
         score = game["score"]
         turn_count = game["numTurns"]
         player_names = game["playerNames"]
-        link = f'hanab.live/replay/{game_id}'
+        link = f'https://hanab.live/replay/{game_id}'
         game_data = [game_id, score, turn_count, player_names, cheated, speedrun, timed, link]
         parsed_seed_data.append(game_data)
 
