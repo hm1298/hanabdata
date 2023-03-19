@@ -15,7 +15,7 @@ def generate_seed_report(seed : str):
     print(f'Seed data accessed. Processing...')
     data = read_seed(seed)
     
-    parsed_seed_data = [['game_id', 'score', 'turn_count', 'player_names', 'cheated', 'speedrun', 'timed']]
+    parsed_seed_data = [['game_id', 'score', 'turn_count', 'player_names', 'cheated', 'speedrun', 'timed', 'link']]
     for game in data:
 
         options = game["options"]
@@ -32,8 +32,8 @@ def generate_seed_report(seed : str):
         score = game["score"]
         turn_count = game["numTurns"]
         player_names = game["playerNames"]
-
-        game_data = [game_id, score, turn_count, player_names, cheated, speedrun, timed]
+        link = f'hanab.live/replay/{game_id}'
+        game_data = [game_id, score, turn_count, player_names, cheated, speedrun, timed, link]
         parsed_seed_data.append(game_data)
 
     write_seed_summary(seed, summary = parsed_seed_data)
