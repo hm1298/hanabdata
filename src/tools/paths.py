@@ -1,6 +1,5 @@
 from os import path
 
-
 def get_user_data_path(username: str):
     return f'./data/raw/users/{username}.json'
 

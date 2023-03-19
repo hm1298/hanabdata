@@ -39,8 +39,7 @@ def generate_seed_report(seed : str):
     write_seed_summary(seed, summary = parsed_seed_data)
 
 
-    for row in parsed_seed_data:
-        print(row)
+
 
 
 
