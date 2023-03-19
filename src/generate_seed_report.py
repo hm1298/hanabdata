@@ -37,7 +37,7 @@ def generate_seed_report(seed : str):
         parsed_seed_data.append(game_data)
 
     write_seed_summary(seed, summary = parsed_seed_data)
-
+    print('Successfully completed')
 
 
 
