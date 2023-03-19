@@ -2,17 +2,6 @@ from tools import paths
 import json
 import csv
 
-def _read_json(path):
-    with open(path) as f:
-        data = json.load(f)
-    return data
-
-def _write_csv(path, data):
-    with open(path, 'w', newline='') as csvfile:
-        csvwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-        csvwriter.writerows(data)
-
-
 
 def read_games(username: str):
     path = paths.get_user_data_path(username)
@@ -33,17 +22,28 @@ def read_seed(seed: str):
     data = _read_json(path)
     return data
 
-
-
 def write_user_summary(username: str, summary):
     filepath = paths.get_user_summary_path(username)
     _write_csv(filepath, summary)
+
+def write_seed_summary(seed: str, summary):
+    filepath = paths.get_seed_summary_path(seed)
+    _write_csv(filepath, summary)
+
 
 def write_winrate_seeds(variant: int, data):
     path = paths.get_variant_winrate_path(variant)
     _write_csv(path, data)
 
-if __name__ == '__main__':
-    username = 'sodiumdebt'
-    games = read_games(username)
-    print(type(games))
+
+
+def _read_json(path):
+    with open(path) as f:
+        data = json.load(f)
+    return data
+
+def _write_csv(path, data):
+    with open(path, 'w', newline='') as csvfile:
+        csvwriter = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        csvwriter.writerows(data)
+ 

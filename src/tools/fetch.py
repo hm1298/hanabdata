@@ -26,9 +26,12 @@ def fetch_game(id: str):
 def fetch_seed(seed: str):
     endpoint = f'https://hanabi.live/api/v1/seed-full/{seed}'
     response = requests.get(endpoint).text
+    if response == '[]':
+        print('Server provided no seed data!')
+        return False
     path = paths.get_seed_data_path(seed)
     _write_json(response, path)
-
+    return True
     
 
     

@@ -2,6 +2,10 @@
 from tools.gamestate import GameState as G
 from tools import read
 
+
+
+
+
 class UserData:
 
     
@@ -14,7 +18,6 @@ class UserData:
     def count(self):
         return len(self.data)
     
-
 class GameData:
     def __init__(self, data):
         self.data = data
@@ -88,7 +91,6 @@ class GameData:
 
 
 
-
 def generate_user_summary(username: str):
     ids = read.read_game_ids(username)
     information = [
@@ -133,3 +135,35 @@ def generate_winrate_summary():
 
     read.write_winrate_seeds(0, winrates)
     
+
+
+def get_option_keys():
+    return [
+        "numPlayers", 
+        "startingPlayer", 
+        "variantID", 
+        "variantName", 
+        "timed", 
+        "timeBase", 
+        "timePerTurn", 
+        "speedrun", 
+        "cardCycle", 
+        "deckPlays", 
+        "emptyClues", 
+        "oneExtraCard",
+        "oneLessCard",
+        "allOrNothing",
+        "detrimentalCharacters",
+     ]
+
+def get_noncheating_options():
+    return {
+        "startingPlayer": 0,  
+        "cardCycle" : False, 
+        "deckPlays" : False, 
+        "emptyClues" : False, 
+        "oneExtraCard" : False,
+        "oneLessCard" : False,
+        "allOrNothing" : False,
+        "detrimentalCharacters" : False,
+    }

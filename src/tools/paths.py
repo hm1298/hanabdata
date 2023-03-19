@@ -19,15 +19,8 @@ def get_game_summary_path(id: int):
 def get_variant_winrate_path(id: int):
     return f'src/data/processed/variants/winrates/{id}.csv'
 
-
-# Consider moving this function to a different folder
-
-def _file_exists(filepath: str):
-    if path.isfile(filepath):
-        return True
-    return False
-
-
+def get_seed_summary_path(seed: str):
+    return f'src/data/processed/seeds/{seed}.csv'
 
 def game_data_exists(id: int):
     gamepath = get_game_data_path(id)
@@ -36,3 +29,11 @@ def game_data_exists(id: int):
 def seed_data_exists(seed: str):
     seedpath = get_seed_data_path(seed)
     return _file_exists(seedpath)
+
+
+
+def _file_exists(filepath: str):
+    if path.isfile(filepath):
+        return True
+    return False
+

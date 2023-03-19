@@ -38,8 +38,6 @@ class GameState:
             self.implement_action(self.actions[i])
             
 
-
-
     # Helper for plays, bombs, and discards
     def _remove_from_hand(self, player_index, order):
         
@@ -81,7 +79,7 @@ class GameState:
         return "bomb"
 
     def _increment_clue_count(self):
-        if self.variant[0:12] == "clue starved":
+        if self.variant[0:12] == "Clue starved":
             inc = 0.5
         else: 
             inc = 1
