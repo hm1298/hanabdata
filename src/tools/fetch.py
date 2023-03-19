@@ -1,14 +1,11 @@
 import json
 import requests
-import os
 from tools import paths
 
 
 
 
-def _write_json(txt, path):
-    with open(path, 'w') as outfile:
-        json.dump(json.loads(txt), outfile)
+
 
 def fetch_games(username: str):
     endpoint = f'https://hanabi.live/api/v1/history-full/{username}'
@@ -32,6 +29,10 @@ def fetch_seed(seed: str):
     path = paths.get_seed_data_path(seed)
     _write_json(response, path)
     return True
+
+def _write_json(txt, path):
+    with open(path, 'w') as outfile:
+        json.dump(json.loads(txt), outfile)
     
 
     
