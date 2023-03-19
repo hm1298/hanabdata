@@ -43,7 +43,7 @@ def _read_json(path):
     return data
 
 def _write_csv(path, data):
-    with open(path, 'w', newline='') as csvfile:
+    with open(path, 'w', newline='', encoding='utf-8') as csvfile:
         csvwriter = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         csvwriter.writerows(data)
  
