@@ -8,7 +8,7 @@ Python3 -- likely pandas in the future, but we're not there yet.
 
 ## Scripts 
 
-Run scripts (.py files in top level folder): you'll end up with raw JSON data from hanab.live in src/data/raw/ and processed CSV reports in src/data/processed. 
+Run scripts (.py files in top level folder): you'll end up with raw JSON data from hanab.live in src/data/raw/ and processed CSV reports in src/data/processed/. 
 
 ## CSVs
 
