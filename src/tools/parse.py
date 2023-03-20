@@ -112,29 +112,43 @@ def generate_user_summary(username: str):
 
     print(len(datalist))
 
-def get_seed_winrate(seed: str):
+def get_seed_winrate(seed: str, restriction, winrate):
     print(f'getting winrate for seed {seed}')
-    win_count = 0
+    win_count, eligible = 0, 0
     data = read.read_seed(seed)
     for game in data:
-        if game["score"] == 25:
-            win_count += 1
+        if restriction.validate(game):
+            eligible += 1
+            if winrate.validate(game):
+                win_count += 1
 
-    winrate = win_count / len(data)
+    winrate = win_count / eligible
     return winrate
 
-def generate_winrate_summary():
+def generate_winrate_summary(seeds, restriction, winrate):
     winrates = [['seed', 'winrate']]
-    for i in range(100):
-        seed = f'p2v0s{i + 1}'
+    for seed in seeds:
         try:
-            w = get_seed_winrate(seed)
+            w = get_seed_winrate(seed, restriction, winrate)
         except:
-            w = 'N/A'
+             print("error")
+             w = 'N/A'
         winrates.append([seed, w])
 
     read.write_winrate_seeds(0, winrates)
-    
+
+# no longer used anywhere? this method and get_noncheating_options()
+# may now be safely folded into restrictions.py, not sure
+def verify_no_cheating(game):
+    """
+    Redundant code. Returns True if no cheating occured in game.
+    May be better to move other uses here or to move this elsewhere, idk
+    """
+    for key in NONCHEATING_OPTIONS:
+        if game["options"][key] != NONCHEATING_OPTIONS[key]:
+            return False
+    return True
+
 
 
 def get_option_keys():
@@ -167,3 +181,5 @@ def get_noncheating_options():
         "allOrNothing" : False,
         "detrimentalCharacters" : False,
     }
+
+NONCHEATING_OPTIONS = get_noncheating_options()
