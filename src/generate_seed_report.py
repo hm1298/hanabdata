@@ -39,12 +39,6 @@ def generate_seed_report(seed : str):
     write_seed_summary(seed, summary = parsed_seed_data)
     print('Successfully completed')
 
-
-
-
-
-
-
 if __name__ == '__main__':
     seed = input('enter seed: ')
     generate_seed_report(seed)
