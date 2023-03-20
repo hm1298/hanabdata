@@ -30,5 +30,5 @@ def seed_data_exists(seed: str):
     return _file_exists(seedpath)
 
 def _file_exists(filepath: str):
-    return path.isfile(filepath):
+    return path.isfile(filepath)
     
