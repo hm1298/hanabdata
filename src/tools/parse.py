@@ -112,32 +112,33 @@ def generate_user_summary(username: str):
 
     print(len(datalist))
 
-def get_seed_winrate(seed: str, allowCheaters=True, allowSpeedrunners=True):
+def get_seed_winrate(seed: str, restriction, winrate):
     print(f'getting winrate for seed {seed}')
     win_count, eligible = 0, 0
     data = read.read_seed(seed)
     for game in data:
-        if allowCheaters or verify_no_cheating(game): # currently, cheated inverts True/False
-            if allowSpeedrunners or not game["options"]["speedrun"]:
-                eligible += 1
-                if game["score"] == 25:
-                    win_count += 1
+        if restriction.validate(game):
+            eligible += 1
+            if winrate.validate(game):
+                win_count += 1
 
     winrate = win_count / eligible
     return winrate
 
-def generate_winrate_summary(seeds, allowCheaters=True, allowSpeedrunners=True):
+def generate_winrate_summary(seeds, restriction, winrate):
     winrates = [['seed', 'winrate']]
     for seed in seeds:
         try:
-            w = get_seed_winrate(seed, allowCheaters, allowSpeedrunners)
+            w = get_seed_winrate(seed, restriction, winrate)
         except:
-            print("error")
-            w = 'N/A'
+             print("error")
+             w = 'N/A'
         winrates.append([seed, w])
 
     read.write_winrate_seeds(0, winrates)
-    
+
+# no longer used anywhere? this method and get_noncheating_options()
+# may now be safely folded into restrictions.py, not sure
 def verify_no_cheating(game):
     """
     Redundant code. Returns True if no cheating occured in game.

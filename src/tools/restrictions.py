@@ -1,3 +1,5 @@
+# still needs more thorough testing !!
+
 # Creates a class to deal with various constraints that would be
 # helpful to deal with large JSONs/dicts that need to be filtered in a
 # variety of ways. In particular, can handle dicts stored in a dict (but
@@ -5,7 +7,7 @@
 # and optional features for data that has been processed at different
 # points in time.
 
-_IDENTITY_FUNCTION = lambda x: x
+_EQUALITY_FUNCTION = lambda x, y: x == y
 """_CONSTANT_FUNCTION = lambda y: lambda x: y"""
 
 
@@ -40,11 +42,11 @@ class Restriction:
 
 	def _evaluate(self, option, key=None):
 		if option not in self.special_cases:
-			return _IDENTITY_FUNCTION
+			return _EQUALITY_FUNCTION
 		if key == None:
 			return self.special_cases[option]
 		if key not in self.special_cases[option]:
-			return _IDENTITY_FUNCTION
+			return _EQUALITY_FUNCTION
 		return self.special_cases[option][key]
 
 	def add_special_case(self, option, func):
@@ -56,30 +58,45 @@ class Restriction:
 		else:
 			self.special_cases[option] = func
 
-	def add_less_than(self, option, value):
-		def func(x): return x < value
+	def add_less_than(self, option):
+		def func(x, y): return x < y
 		self.add_special_case(option, func)
 
-	def add_greater_than(self, option, value):
-		def func(x): return x > value
+	def add_greater_than(self, option):
+		def func(x, y): return x > y
 		self.add_special_case(option, func)
 
 	def validate(self, data):
+		# print(data)
 		for option in self.necessary_constraints:
 			if option not in data:
+				# print(f'gotcha, {option}')
 				return False
-			if type(option) != dict:
+			data_options = data[option]
+			if type(data_options) != dict:
 				value = self.necessary_constraints[option]
-				if data[option] != self._evaluate(option)(value):
-					return False
-				continue
-			for key in option:
-				if key not in data[option]:
+				# print(option)
+				# print(data_options)
+				# print(value)
+				# print(self.special_cases)
+				# print(self._evaluate(option)(data_options, value))
+				if self._evaluate(option)(data_options, value):
+					# print(f'gotcha2, {option}')
+					continue
+				return False
+			for key in self.necessary_constraints[option]:
+				if key not in data_options:
+					# print(f'gotcha3, {option} {key}')
 					return False
 				value = self.necessary_constraints[option][key]
-				if data[option][key] != self._evaluate(option, key)(value):
-					return False
+				# print(self._evaluate(option, key)(value, data[option][key]))
+				if self._evaluate(option, key)(value, data[option][key]):
+					# print(f'gotcha4, {option} {key}')
+					continue
+				return False
 
+		# beware of errors in the following. changed the above and not
+		# this yet (but it currently is not used by anything)
 		for option in self.optional_constraints:
 			if option not in data:
 				continue
@@ -109,12 +126,19 @@ def get_standard_restrictions():
 	        "oneLessCard" : False,
 	        "allOrNothing" : False,
 	        "detrimentalCharacters" : False,
+	        "speedrun": False,
 		},
-		"speedrun": False,
-		"turn_count": 3
+		"numTurns": 3
 	}
+	# WARNING: I'm not sure where numTurns vs turn_count is used, so
+	# this may not be compatible over different formats. In that case,
+	# such checks may be safely moved to optional if data processing may
+	# change the name of this key.
 
 	standard = Restriction(only_good_games, {"cheated": False})
-	standard.add_greater_than("turn_count", 3)
+	standard.add_greater_than("numTurns")
+
+	return standard
 
 STANDARD_GAME_RESTRICTION = get_standard_restrictions()
+MAX_SCORE_ONLY = Restriction({"score": 25}, {})

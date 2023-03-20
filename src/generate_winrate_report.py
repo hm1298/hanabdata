@@ -3,8 +3,9 @@ from tools.read import read_seed, write_seed_summary
 from tools.paths import seed_data_exists
 from tools.parse import get_noncheating_options
 from tools.parse import generate_winrate_summary
+from tools.restrictions import *
 
-def generate_winrate_report(seedPrefix : str, n : int, allowCheaters=True, allowSpeedrunners=True):
+def generate_winrate_report(seedPrefix : str, n : int, restriction, winrate):
 	noncheating_options = get_noncheating_options()
 
 	seeds, needsUpdate = [], []
@@ -20,6 +21,7 @@ def generate_winrate_report(seedPrefix : str, n : int, allowCheaters=True, allow
 		seed = seedPrefix + str(i)
 		update_seed(seed)
 
-	generate_winrate_summary(seeds, allowCheaters, allowSpeedrunners)
+	generate_winrate_summary(seeds, restriction, winrate)
 
-generate_winrate_report("p2v0s", 191, False, False)
+print(STANDARD_GAME_RESTRICTION)
+generate_winrate_report("p2v0s", 191, STANDARD_GAME_RESTRICTION, MAX_SCORE_ONLY)
