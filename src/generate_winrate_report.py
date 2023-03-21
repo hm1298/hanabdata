@@ -1,15 +1,20 @@
+"""Generates winrate report.
+
+Writes to src/data/processed/variants/winrates/<file>.
+"""
+
 from tools.update import update_seed
 from tools.paths import seed_data_exists
 from tools.parse import generate_success_rate_summary
 from tools.restriction import STANDARD_GAME_RESTRICTION, MAX_SCORE_ONLY
 
-def generate_success_rate_report(seed_prefix, n, restriction, goal):
+def generate_success_rate_report(seed_prefix, limit, restriction, goal):
     """Writes to a CSV the success rate of a given goal among all games
     satisfying the given restriction for each of the first n seeds in a
     variant with given seed_prefix.
     """
     seeds, needs_update = [], []
-    for i in range(1, n + 1):
+    for i in range(1, limit + 1):
         seed = seed_prefix + str(i)
         seeds.append(seed)
         if not seed_data_exists(seed):
