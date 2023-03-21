@@ -136,19 +136,17 @@ def get_seed_success_rate(seed, restriction, goal):
             if goal.validate(game):
                 win_count += 1
 
+    if eligible == 0:
+        return 'N/A'
     rate = win_count / eligible
     return rate
 
 
 def generate_success_rate_summary(seeds, restriction, goal):
-    """Provides a table of winrates for a list of seeds."""
+    """Provides a table of success rates for a list of seeds."""
     winrates = [['seed', 'winrate']]
     for seed in seeds:
-        rate = 'N/A'
-        try:
-            rate = get_seed_success_rate(seed, restriction, goal)
-        except Exception as err:
-            print(f'Error with type {err}')
+        rate = get_seed_success_rate(seed, restriction, goal)
         winrates.append([seed, rate])
 
     read.write_winrate_seeds(0, winrates)
