@@ -1,3 +1,6 @@
+"""This module contains tools to take raw JSON data and 
+process it into something more useful to us mortals"""
+
 from tools.gamestate import GameState as G
 from tools import read
 
@@ -96,6 +99,7 @@ class GameData:
 
 
 def generate_user_summary(username: str):
+    """Provides an overview of a user's data from their summary JSON"""
     ids = read.read_game_ids(username)
     information = [
         'ID',
@@ -119,6 +123,9 @@ def generate_user_summary(username: str):
 
 
 def get_seed_winrate(seed: str, restriction, winrate):
+    """Provides the winrate of a given seed JSON, filtering out 
+    any games not meeting a given restriction."""
+
     print(f'getting winrate for seed {seed}')
     win_count, eligible = 0, 0
     data = read.read_seed(seed)
@@ -133,14 +140,16 @@ def get_seed_winrate(seed: str, restriction, winrate):
 
 
 def generate_winrate_summary(seeds, restriction, winrate):
+    """Provides a table of winrates for a list of seeds."""
+
     winrates = [['seed', 'winrate']]
     for seed in seeds:
+        seed_winrate = 'N/A'
         try:
-            w = get_seed_winrate(seed, restriction, winrate)
-        except:
-            print("error")
-            w = 'N/A'
-        winrates.append([seed, w])
+            seed_winrate = get_seed_winrate(seed, restriction, winrate)
+        except Exception as err:
+            print(f'Error with type {err}')
+        winrates.append([seed, seed_winrate])
 
     read.write_winrate_seeds(0, winrates)
 
@@ -152,13 +161,14 @@ def verify_no_cheating(game):
     Redundant code. Returns True if no cheating occured in game.
     May be better to move other uses here or to move this elsewhere, idk
     """
-    for key in NONCHEATING_OPTIONS:
-        if game["options"][key] != NONCHEATING_OPTIONS[key]:
+    for key, val in NONCHEATING_OPTIONS.items():
+        if game["options"][key] != val:
             return False
     return True
 
 
 def get_option_keys():
+    """Provides a list of all possible options that might be used in a Hanabi game"""
     return [
         "numPlayers",
         "startingPlayer",
@@ -179,6 +189,9 @@ def get_option_keys():
 
 
 def get_noncheating_options():
+    """Provides a list of all standard options. These options are all game-changing, so any
+    game played any one of them changed will not be 
+    comparable to games played with these options."""
     return {
         "startingPlayer": 0,
         "cardCycle": False,
