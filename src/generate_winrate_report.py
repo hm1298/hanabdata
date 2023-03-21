@@ -1,8 +1,8 @@
 from tools.update import update_seed
 from tools.paths import seed_data_exists
 from tools.parse import generate_success_rate_summary
-from tools.restrictions import Restriction
-from tools.restrictions import STANDARD_GAME_RESTRICTION, MAX_SCORE_ONLY
+from tools.restriction import Restriction
+from tools.restriction import STANDARD_GAME_RESTRICTION, MAX_SCORE_ONLY
 
 def generate_success_rate_report(seed_prefix, n, restriction, goal):
     """Writes to a CSV the success rate of a given goal among all games
