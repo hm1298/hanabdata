@@ -1,6 +1,7 @@
 """
 This module connects anything that wants to read or write data to the module handling filepaths. 
-It could be better for these two modules to be merged into one.
+It could be better for these two modules to be merged into one. Functions self-explanatory so 
+we disable the function docstring checker from pylint.
 """
 # pylint: disable=missing-function-docstring
 import json
