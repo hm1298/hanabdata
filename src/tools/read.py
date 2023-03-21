@@ -1,15 +1,19 @@
-from tools import paths
+"""
+This module connects anything that wants to read or write data to the module handling filepaths. 
+It could be better for these two modules to be merged into one.
+"""
+
 import json
 import csv
-
+from tools import paths
 
 def read_games(username: str):
     path = paths.get_user_data_path(username)
     data = _read_json(path)
     return data
 
-def read_game(id: int):
-    path = paths.get_game_data_path(id)
+def read_game(game_id: int):
+    path = paths.get_game_data_path(game_id)
     data = _read_json(path)
     return data
 
@@ -38,7 +42,7 @@ def write_winrate_seeds(variant: int, data):
 
 
 def _read_json(path):
-    with open(path) as f:
+    with open(path, encoding="utf8") as f:
         data = json.load(f)
     return data
 

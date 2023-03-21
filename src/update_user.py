@@ -1,3 +1,5 @@
+"""Script to update user information"""
+
 from tools.update import update_user
 
 if __name__ == '__main__':
