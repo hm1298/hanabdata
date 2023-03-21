@@ -122,34 +122,32 @@ def generate_user_summary(username: str):
     print(len(datalist))
 
 
-def get_seed_winrate(seed: str, restriction, winrate):
-    """Provides the winrate of a given seed JSON, filtering out 
-    any games not meeting a given restriction."""
-
+def get_seed_success_rate(seed, restriction, goal):
+    """Provides the success rate of goal in a given seed JSON, filtering
+    out any games not meeting a given restriction.
+    """
     print(f'getting winrate for seed {seed}')
+
     win_count, eligible = 0, 0
     data = read.read_seed(seed)
     for game in data:
         if restriction.validate(game):
             eligible += 1
-            if winrate.validate(game):
+            if goal.validate(game):
                 win_count += 1
 
-    winrate = win_count / eligible
-    return winrate
+    if eligible == 0:
+        return 'N/A'
+    rate = win_count / eligible
+    return rate
 
 
-def generate_winrate_summary(seeds, restriction, winrate):
-    """Provides a table of winrates for a list of seeds."""
-
+def generate_success_rate_summary(seeds, restriction, goal):
+    """Provides a table of success rates for a list of seeds."""
     winrates = [['seed', 'winrate']]
     for seed in seeds:
-        seed_winrate = 'N/A'
-        try:
-            seed_winrate = get_seed_winrate(seed, restriction, winrate)
-        except Exception as err:
-            print(f'Error with type {err}')
-        winrates.append([seed, seed_winrate])
+        rate = get_seed_success_rate(seed, restriction, goal)
+        winrates.append([seed, rate])
 
     read.write_winrate_seeds(0, winrates)
 
