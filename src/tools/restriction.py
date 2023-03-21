@@ -6,7 +6,8 @@ and optional features for data that has been processed at different
 points in time.
 """
 
-def _equality_function(x, y): return x == y
+def _equality_function(x, y): 
+    return x == y
 
 
 # This should be refactored to allow for arbitrarily nested dicts (ew!)

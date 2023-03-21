@@ -1,5 +1,10 @@
-
+"""Tools to anaylze Hanabi Games"""
 class GameState:
+    """
+    Gamestate is a class to handle what an ongoing game of hanabi looks like on a specific turn.
+    It is initialized with JSON data and the turn number, then
+    contains methods to provide information about the game on that turn.
+    """
 
     def __init__(self, data, turn):
 
@@ -7,14 +12,14 @@ class GameState:
 
         self.data = data
         self.deck = data["deck"]
-        
+
         for i, card in enumerate(self.deck):
             card["order"] = i
 
         self.players = data["players"]
         self.actions = data["actions"]
         self.suit_count = 1 + max([card["suitIndex"] for card in self.deck])
-        try: 
+        try:
             self.variant = data["options"]["variant"]
         except:
             self.variant = "No Variant"
@@ -22,45 +27,50 @@ class GameState:
         self.hand_size = _get_hand_size(self.data)
 
         # Turn-dependent game info
-        
+
         self.clue_token_count = 8
         self.turn = 0
         self.discard_pile = []
         self.play_stacks = [[] for _ in range(self.suit_count)]
         self.score = 0
-        self.hands = _get_starting_hands(self.deck, self.player_count, self.hand_size)
+        self.hands = _get_starting_hands(
+            self.deck, self.player_count, self.hand_size)
         self.current_player_index = 0
         self.strike_count = 0
-        self.draw_pile_size = len(self.deck) - self.player_count * self.hand_size
-        
+        self.draw_pile_size = len(self.deck) - \
+            self.player_count * self.hand_size
+
         # progress to current turn
         for i in range(turn):
             self.implement_action(self.actions[i])
-            
 
     # Helper for plays, bombs, and discards
+
     def _remove_from_hand(self, player_index, order):
-        
+
         found = False
         for i, card in enumerate(self.hands[player_index]):
             if card["order"] == order:
                 found = True
+                found_slot = i
+                real_card = card
                 break
 
         if not found:
             print(f'could not find card {order}!')
             return self.deck[order]
 
-        remains = self.hands[player_index][0:i] + self.hands[player_index][i + 1:]
+        remains = self.hands[player_index][:found_slot] + \
+            self.hands[player_index][found_slot + 1:]
         self.hands[player_index] = remains
-        return card
-        
+        return real_card
 
     def _draw_card(self):
         if self.draw_pile_size == 0:
             return
         card = self.deck[- self.draw_pile_size]
-        self.hands[self.current_player_index] = [card] + self.hands[self.current_player_index]
+        self.hands[self.current_player_index] = [
+            card] + self.hands[self.current_player_index]
         self.draw_pile_size -= 1
 
     def _get_type(self, action):
@@ -69,9 +79,9 @@ class GameState:
             return "rank"
         if i == 2:
             return "color"
-        if i == 1: 
+        if i == 1:
             return "discard"
-        if i == 4 or i == 5: 
+        if i == 4 or i == 5:
             return "vtk"
         card = self.deck[action["target"]]
         if len(self.play_stacks[card["suitIndex"]]) == card["rank"] - 1:
@@ -81,10 +91,9 @@ class GameState:
     def _increment_clue_count(self):
         if self.variant[0:12] == "Clue starved":
             inc = 0.5
-        else: 
+        else:
             inc = 1
         self.clue_token_count = min(8, self.clue_token_count + inc)
-
 
     # function to call when the game progresses
 
@@ -96,15 +105,17 @@ class GameState:
 
         elif action_type == "color":
             self.clue_token_count -= 1
-            
+
         elif action_type == "discard":
-            card = self._remove_from_hand(self.current_player_index, action["target"])
+            card = self._remove_from_hand(
+                self.current_player_index, action["target"])
             self._increment_clue_count()
             self.discard_pile.append(card)
             self._draw_card()
-            
+
         elif action_type == "play":
-            card = self._remove_from_hand(self.current_player_index, action["target"])
+            card = self._remove_from_hand(
+                self.current_player_index, action["target"])
             self.play_stacks[card["suitIndex"]].append(card)
             self._draw_card()
             self.score += 1
@@ -112,13 +123,15 @@ class GameState:
             if self.deck[action["target"]]["rank"] == 5:
                 self._increment_clue_count()
 
-        elif action_type == "bomb": 
-            card = self._remove_from_hand(self.current_player_index, action["target"])
+        elif action_type == "bomb":
+            card = self._remove_from_hand(
+                self.current_player_index, action["target"])
             self.discard_pile.append(card)
             self.strike_count += 1
             self._draw_card()
         if action_type != "vtk":
-            self.current_player_index = (self.current_player_index + 1) % self.player_count
+            self.current_player_index = (
+                self.current_player_index + 1) % self.player_count
             self.turn += 1
 
     # Replay state at prior turn
@@ -141,28 +154,28 @@ class GameState:
                 hand_repr.append(suit + str(rank))
             hands_repr.append(hand_repr)
 
-
-
         return (
-            f"turn: {self.turn}\n" +  
+            f"turn: {self.turn}\n" +
             f"hands: {hands_repr}\n"
         )
-    
+
+
 def _get_hand_size(data):
     player_count = len(data["players"])
     if player_count < 4:
-        x = 5
+        hand_size = 5
     elif player_count < 6:
-        x = 4
-    else: 
-        x = 3
+        hand_size = 4
+    else:
+        hand_size = 3
 
     if "options" in data:
         if "oneExtraCard" in data["options"]:
-            x += 1
+            hand_size += 1
         if "oneLessCard" in data["options"]:
-            x -= 1
-    return x
+            hand_size -= 1
+    return hand_size
+
 
 def _get_starting_hands(deck, player_count, hand_size):
     hands = []
