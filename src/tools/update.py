@@ -10,7 +10,7 @@ def update_user(username: str):
 
 
     print(f'Fetching game list for {username}...')
-    fetch.fetch_games(username)
+    fetch.fetch_games2(username)
     print(f'Updated list of {username}\'s games. Searching for games without data...')
     missing_ids = _find_missing_games(username)
     count = len(missing_ids)
