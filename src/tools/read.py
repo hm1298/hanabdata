@@ -2,7 +2,7 @@
 This module connects anything that wants to read or write data to the module handling filepaths. 
 It could be better for these two modules to be merged into one.
 """
-
+# pylint: disable=missing-function-docstring
 import json
 import csv
 from tools import paths
@@ -42,8 +42,8 @@ def write_winrate_seeds(variant: int, data):
 
 
 def _read_json(path):
-    with open(path, encoding="utf8") as f:
-        data = json.load(f)
+    with open(path, encoding="utf8") as json_file:
+        data = json.load(json_file)
     return data
 
 def _write_csv(path, data):
