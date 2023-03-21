@@ -178,3 +178,4 @@ def get_standard_restrictions():
 
 STANDARD_GAME_RESTRICTION = get_standard_restrictions()
 MAX_SCORE_ONLY = Restriction({"score": 25}, {})
+MAX_SCORE30_ONLY = Restriction({"score": 30}, {})
