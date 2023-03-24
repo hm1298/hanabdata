@@ -5,29 +5,30 @@ import json
 import requests
 from tools import paths
 
-SITE = "https://hanabi.live"
+SITE = "https://hanabi.live/api/v1"
 ROWS = 100  # note the API cannot exceed size of 100
+MAX_TIME = 12
 
 def fetch_games(username: str):
-    endpoint = f'{SITE}/api/v1/history-full/{username}'
-    response = requests.get(endpoint, timeout=15).text
+    endpoint = f'{SITE}/history-full/{username}'
+    response = requests.get(endpoint, timeout=MAX_TIME).text
     path = paths.get_user_data_path(username)
     _write_json(response, path)
 
 def fetch_games2(username: str):
-    endpoint = f'{SITE}/api/v1/history/{username}?size={ROWS}'
+    endpoint = f'{SITE}/history/{username}?size={ROWS}'
     path = paths.get_user_data_path(username)
     _fetch_paginated(endpoint, path)
 
 def fetch_game(game_id: str):
-    endpoint = f'{SITE}/export/{game_id}'
-    response = requests.get(endpoint, timeout=15).text
+    endpoint = f'https://hanabi.live/export/{game_id}'
+    response = requests.get(endpoint, timeout=MAX_TIME).text
     path = paths.get_game_data_path(game_id)
     _write_json(response, path)
 
 def fetch_seed(seed: str):
-    endpoint = f'{SITE}/api/v1/seed-full/{seed}'
-    response = requests.get(endpoint, timeout=15).text
+    endpoint = f'{SITE}/seed-full/{seed}'
+    response = requests.get(endpoint, timeout=MAX_TIME).text
     if response == '[]':
         print('Server provided no seed data!')
         return False
@@ -35,26 +36,39 @@ def fetch_seed(seed: str):
     _write_json(response, path)
     return True
 
+def find_given_game(url: str, given: int):
+    """Returns the nth Game ID in the API. Returns none if too large."""
+    safe_url = url.replace("-full", "") + f'?size={ROWS}'
+    response = requests.get(safe_url, timeout=MAX_TIME).json()
+    num_games = response["rows"]
+
+    if given > num_games:
+        return
+
+    response = requests.get
 
 
-def _fetch_paginated(url: str, write_to: str, user_specified_limit=1000000):
+def _fetch_paginated(url: str, write_to: str, max_games=None):
     """Uses the paginated API to download JSON data. Mainly intended for
     pages that are too large to load without pagination.
 
-    Also has a built-in limit on number of pages that may be specified
-    with input.
+    Also can limit number of games downloaded. If the limit applies,
+    then the oldest games will be downloaded.
     """
     print("Reached pagination")
 
-    response = requests.get(url, timeout=15).json()
+    if max_games:
+        game_id_limit = find_nth_game(url, max_games)
+
+    response = requests.get(url, timeout=MAX_TIME).json()
     result = response["rows"]
 
     page_limit = 1 + (response["total_rows"] - 1) // ROWS
-    page_limit = min(page_limit, user_specified_limit)
+    page_limit = min(page_limit, max_games)
     for page in range(1, page_limit):
         if page % 5 == 0:
             print(f"On page {page} of {page_limit}")
-        new_response = requests.get(url + f'&page={page}', timeout=15)
+        new_response = requests.get(url + f'&page={page}', timeout=MAX_TIME)
         new_result = new_response.json()["rows"]
         result.extend(new_result)
 
