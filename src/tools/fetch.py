@@ -1,4 +1,4 @@
-""""Handles all calls to hanab.live. Writes to the filesysytem using read.py"""
+""""Handles all calls to hanab.live. Writes to the filesysytem using functions in read.py"""
 # pylint: disable=missing-function-docstring
 
 import requests
@@ -7,7 +7,7 @@ from tools import read
 SITE = "https://hanabi.live"
 ROWS = 100  # note the API cannot exceed size of 100
 
-def fetch_games(username: str):
+def fetch_user(username: str):
     """Downloads a user's data from hanab.live. First tries to find data already stored inorder to not download 
     duplicate data. If no data is stored, tries to get down load all user data. 
     If hanab.live does not respond in time, attempts to download paginated data."""
@@ -15,7 +15,7 @@ def fetch_games(username: str):
     last_id = 0
     if read.user_data_exists(username):
         print(f'found prior data for {username}!')
-        prior_data = read.read_games(username)
+        prior_data = read.read_user(username)
         last_id = prior_data[0]['id']
         endpoint = f'{SITE}/api/v1/history-full/{username}?start={last_id + 1}'
     else: 
@@ -24,18 +24,17 @@ def fetch_games(username: str):
         response = requests.get(endpoint, timeout=15).json()
         
         if read.user_data_exists(username):
-            prior_data = read.read_games(username)
+            prior_data = read.read_user(username)
         else:
             prior_data = []
         full_data = response + prior_data
-        read.write_games(username, full_data)   
-
+        read.write_user(username, full_data)   
 
     except requests.exceptions.ReadTimeout:
         print('The request timed out! Attempting to use paginated API...')
-        fetch_games_paginated(username)
+        fetch_user_paginated(username)
 
-def fetch_games_paginated(username: str):
+def fetch_user_paginated(username: str):
     """This function is NOT optimized, future proof, or guaranteed to work with all users! 
     Once hanab.live exceeds 10^6 games it will stop working!
     Games likely to also be sorted incorrectly!
@@ -51,7 +50,7 @@ def fetch_games_paginated(username: str):
     all_games = []
     for page in reversed(pages):
         all_games = all_games + page
-    read.write_games(username, all_games)
+    read.write_user(username, all_games)
     
 def fetch_game(game_id: str):
     endpoint = f'{SITE}/export/{game_id}'

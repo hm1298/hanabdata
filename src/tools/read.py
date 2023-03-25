@@ -10,12 +10,12 @@ import csv
 from os import path
 
 
-def read_games(username: str):
+def read_user(username: str):
     user_path = _get_user_data_path(username)
     data = _read_json(user_path)
     return data
 
-def write_games(username: str, data):
+def write_user(username: str, data):
     user_path = _get_user_data_path(username)
     _write_json(user_path, data)
 
@@ -68,7 +68,7 @@ def user_data_exists(username: str):
     return _file_exists(user_path)
 
 def read_game_ids(username: str):
-    data = read_games(username)
+    data = read_user(username)
     return [game["id"] for game in data]
 
 
