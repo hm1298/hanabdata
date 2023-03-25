@@ -190,14 +190,14 @@ additional-builtins=
 callbacks=cb_,_cb
 
 # Tells whether unused global variables should be treated as a violation.
-allow-global-unused-variables=yes
+allow-global-unused-variables=no
 
 # List of names allowed to shadow builtins
 allowed-redefined-builtins=
 
 # Argument names that match this expression will be ignored. Default to name
 # with leading underscore.
-ignored-argument-names=_.*
+ignored-argument-names=
 
 # List of qualified module names which can have objects that can redefine
 # builtins.
@@ -237,7 +237,7 @@ expected-line-ending-format=
 [BASIC]
 
 # Good variable names which should always be accepted, separated by a comma
-good-names=i,j,k,ex,Run,_
+good-names=i,j,k,x,y,_
 
 # Good variable names regexes, separated by a comma. If names match any regex,
 # they will always be accepted
@@ -255,7 +255,7 @@ bad-names-rgxs=
 name-group=
 
 # Include a hint for the correct naming format with invalid-name
-include-naming-hint=no
+include-naming-hint=yes
 
 # Naming style matching correct function names.
 function-naming-style=snake_case
@@ -535,7 +535,7 @@ runtime-typing = no
 [DEPRECATED_BUILTINS]
 
 # List of builtins function names that should not be used, separated by a comma
-bad-functions=map,input
+bad-functions=map
 
 
 [REFACTORING]
