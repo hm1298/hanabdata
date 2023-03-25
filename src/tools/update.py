@@ -1,7 +1,7 @@
 """Tools to check status of and update data. Generally used by scripts in scr"""
 
 
-from tools import fetch, read, parse, paths
+from tools import fetch, read, parse
 
 
 def update_user(username: str):
@@ -10,7 +10,7 @@ def update_user(username: str):
 
 
     print(f'Fetching game list for {username}...')
-    fetch.fetch_games2(username)
+    fetch.fetch_games(username)
     print(f'Updated list of {username}\'s games. Searching for games without data...')
     missing_ids = _find_missing_games(username)
     count = len(missing_ids)
@@ -24,7 +24,6 @@ def update_user(username: str):
 
     print(f'Successfully updated all game data for {username}.')
 
-
 def update_seed(seed: str):
     """Downloads and stores seed summary data"""
 
@@ -34,13 +33,13 @@ def update_seed(seed: str):
     if successful:
         print(f'Successfully acquired {seed} data.')
 
-
+    
 def _find_missing_games(username: str):
     data = read.read_games(username)
     parser = parse.UserData(data)
     missing_ids = []
     for game_id in parser.get_ids():
-        if paths.game_data_exists(game_id):
+        if read.game_data_exists(game_id):
             continue
         missing_ids.append(game_id)
     return missing_ids

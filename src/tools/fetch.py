@@ -1,49 +1,82 @@
-"""Downloads JSONs from Hanab Live's API, then writes to local files."""
+""""Handles all calls to hanab.live. Writes to the filesysytem using read.py"""
 # pylint: disable=missing-function-docstring
 
-import json
 import requests
-from tools import paths
+from tools import read
 
 SITE = "https://hanabi.live"
 ROWS = 100  # note the API cannot exceed size of 100
 
 def fetch_games(username: str):
-    endpoint = f'{SITE}/api/v1/history-full/{username}'
-    response = requests.get(endpoint, timeout=15).text
-    path = paths.get_user_data_path(username)
-    _write_json(response, path)
+    """Downloads a user's data from hanab.live. First tries to find data already stored inorder to not download 
+    duplicate data. If no data is stored, tries to get down load all user data. 
+    If hanab.live does not respond in time, attempts to download paginated data."""
 
-def fetch_games2(username: str):
-    endpoint = f'{SITE}/api/v1/history/{username}?size={ROWS}'
-    path = paths.get_user_data_path(username)
-    _fetch_paginated(endpoint, path)
+    last_id = 0
+    if read.user_data_exists(username):
+        print(f'found prior data for {username}!')
+        prior_data = read.read_games(username)
+        last_id = prior_data[0]['id']
+        endpoint = f'{SITE}/api/v1/history-full/{username}?start={last_id + 1}'
+    else: 
+        endpoint = f'{SITE}/api/v1/history-full/{username}'
+    try: 
+        response = requests.get(endpoint, timeout=15).json()
+        
+        if read.user_data_exists(username):
+            prior_data = read.read_games(username)
+        else:
+            prior_data = []
+        full_data = response + prior_data
+        read.write_games(username, full_data)   
 
+
+    except requests.exceptions.ReadTimeout:
+        print('The request timed out! Attempting to use paginated API...')
+        fetch_games_paginated(username)
+
+def fetch_games_paginated(username: str):
+    """This function is NOT optimized, future proof, or guaranteed to work with all users! 
+    Once hanab.live exceeds 10^6 games it will stop working!
+    Games likely to also be sorted incorrectly!
+    """
+    pages = []
+    for i in range(10):
+        start = i * 100000
+        end = (i + 1) * 100000 - 1
+        print(f'fetching games with IDs between {start} and {end}')
+        endpoint = f'{SITE}/api/v1/history-full/{username}?start={start}&end={end}'
+        response = requests.get(endpoint, timeout=15).json()
+        pages.append(response)
+    all_games = []
+    for page in reversed(pages):
+        all_games = all_games + page
+    read.write_games(username, all_games)
+    
 def fetch_game(game_id: str):
     endpoint = f'{SITE}/export/{game_id}'
-    response = requests.get(endpoint, timeout=15).text
-    path = paths.get_game_data_path(game_id)
-    _write_json(response, path)
+    response = requests.get(endpoint, timeout=15).json()
+    read.write_game(game_id, response)
 
 def fetch_seed(seed: str):
     endpoint = f'{SITE}/api/v1/seed-full/{seed}'
-    response = requests.get(endpoint, timeout=15).text
-    if response == '[]':
+    response = requests.get(endpoint, timeout=15).json()
+    if response == []:
         print('Server provided no seed data!')
         return False
-    path = paths.get_seed_data_path(seed)
-    _write_json(response, path)
+    read.write_seed(seed, response)
     return True
 
 
-
-def _fetch_paginated(url: str, write_to: str, user_specified_limit=1000000):
+def _fetch_paginated(url: str, write_func, tag, user_specified_limit=1000000):
     """Uses the paginated API to download JSON data. Mainly intended for
     pages that are too large to load without pagination.
 
     Also has a built-in limit on number of pages that may be specified
     with input.
     """
+
+    
     print("Reached pagination")
 
     response = requests.get(url, timeout=15).json()
@@ -58,12 +91,4 @@ def _fetch_paginated(url: str, write_to: str, user_specified_limit=1000000):
         new_result = new_response.json()["rows"]
         result.extend(new_result)
 
-    _write_json2(result, write_to)
-
-def _write_json(txt, path):
-    with open(path, 'w', encoding="utf8") as outfile:
-        json.dump(json.loads(txt), outfile)
-
-def _write_json2(txt, path):
-    with open(path, 'w', encoding="utf8") as outfile:
-        json.dump(txt, outfile)
+    write_func(tag, result)
