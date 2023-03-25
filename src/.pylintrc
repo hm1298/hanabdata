@@ -190,7 +190,7 @@ additional-builtins=
 callbacks=cb_,_cb
 
 # Tells whether unused global variables should be treated as a violation.
-allow-global-unused-variables=no
+allow-global-unused-variables=yes
 
 # List of names allowed to shadow builtins
 allowed-redefined-builtins=
@@ -518,7 +518,7 @@ preferred-modules=
 
 # Exceptions that will emit a warning when being caught. Defaults to
 # "Exception"
-overgeneral-exceptions=
+overgeneral-exceptions=Exception
 
 
 [TYPING]
