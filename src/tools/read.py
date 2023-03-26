@@ -72,6 +72,9 @@ def read_game_ids(username: str):
     return [game["id"] for game in data]
 
 
+def write_score_hunt(username: str, data):
+    score_hunt_path = _get_score_hunt_path(username)
+    _write_csv(score_hunt_path, data)
 
 
 
@@ -101,6 +104,9 @@ def _get_variant_winrate_path(variant_id: int):
 
 def _get_seed_summary_path(seed: str):
     return f'./data/processed/seeds/{seed}.csv'
+
+def _get_score_hunt_path(username: str):
+    return f'./data/processed/score_hunts/{username}.csv'
 
 def _read_json(file_path):
     with open(file_path, encoding="utf8") as json_file:
