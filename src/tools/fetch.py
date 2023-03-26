@@ -1,71 +1,67 @@
-""""Handles all calls to hanab.live. Writes to the filesysytem using functions in read.py"""
+""""Handles all calls to hanab.live. Returns JSONs."""
 # pylint: disable=missing-function-docstring
 
 import requests
-from tools import read
 
 SITE = "https://hanabi.live"
 ROWS = 100  # note the API cannot exceed size of 100
 
-def fetch_user(username: str):
+def fetch_user(username: str, start_id = 0):
     """Downloads a user's data from hanab.live. First tries to find data already stored inorder to not download 
     duplicate data. If no data is stored, tries to get down load all user data. 
     If hanab.live does not respond in time, attempts to download paginated data."""
 
-    last_id = 0
-    if read.user_data_exists(username):
-        print(f'found prior data for {username}!')
-        prior_data = read.read_user(username)
-        last_id = prior_data[0]['id']
-        endpoint = f'{SITE}/api/v1/history-full/{username}?start={last_id + 1}'
+    if start_id > 0:    
+        endpoint = f'{SITE}/api/v1/history-full/{username}?start={start_id}'
     else: 
         endpoint = f'{SITE}/api/v1/history-full/{username}'
     try: 
         response = requests.get(endpoint, timeout=15).json()
-        
-        if read.user_data_exists(username):
-            prior_data = read.read_user(username)
-        else:
-            prior_data = []
-        full_data = response + prior_data
-        read.write_user(username, full_data)   
-
+        return response  
     except requests.exceptions.ReadTimeout:
-        print('The request timed out! Attempting to use paginated API...')
-        fetch_user_paginated(username)
+        print('The request timed out! Attempting to to split games into smaller chunks...')
+        return fetch_user_chunk(username, min_id = start_id)
 
-def fetch_user_paginated(username: str):
-    """This function is NOT optimized, future proof, or guaranteed to work with all users! 
+def fetch_user_chunk(username: str, min_id = 0, max_id = 1000000, increment = 100000):
+    """
+    This function is NOT optimized, future proof, or guaranteed to work with all users! 
     Once hanab.live exceeds 10^6 games it will stop working!
     Games likely to also be sorted incorrectly!
     """
-    pages = []
-    for i in range(10):
-        start = i * 100000
-        end = (i + 1) * 100000 - 1
-        print(f'fetching games with IDs between {start} and {end}')
-        endpoint = f'{SITE}/api/v1/history-full/{username}?start={start}&end={end}'
-        response = requests.get(endpoint, timeout=15).json()
-        pages.append(response)
-    all_games = []
-    for page in reversed(pages):
-        all_games = all_games + page
-    read.write_user(username, all_games)
+    start = min_id
+    next_start = min_id + increment
+    end = next_start - 1
+    data = []
     
+    while True:
+        end = min(end, max_id)
+        print(f'fetching games with IDs between {start} and {end}')
+        
+        endpoint = f'{SITE}/api/v1/history-full/{username}?start={start}&end={end}'
+        try: 
+            response = requests.get(endpoint, timeout=15).json()
+        except requests.exceptions.ReadTimeout as error:
+            if increment <= 1000:
+                raise ConnectionError('The request timed out! \
+                                      This is either your internet or the server being slow') from error
+            print('The request timed out! This could be due to asking the server for too much. \
+                  Attempting to split request into smaller chunks...')
+            response = fetch_user_chunk(username, min_id = start, max_id = end, increment = increment // 10)
+        data = response + data
+        if end == max_id:
+            break
+
+    return data
+        
 def fetch_game(game_id: str):
     endpoint = f'{SITE}/export/{game_id}'
     response = requests.get(endpoint, timeout=15).json()
-    read.write_game(game_id, response)
+    return response
 
 def fetch_seed(seed: str):
     endpoint = f'{SITE}/api/v1/seed-full/{seed}'
     response = requests.get(endpoint, timeout=15).json()
-    if response == []:
-        print('Server provided no seed data!')
-        return False
-    read.write_seed(seed, response)
-    return True
-
+    return response
 
 def _fetch_paginated(url: str, write_func, tag, user_specified_limit=1000000):
     """Uses the paginated API to download JSON data. Mainly intended for
@@ -89,5 +85,4 @@ def _fetch_paginated(url: str, write_func, tag, user_specified_limit=1000000):
         new_response = requests.get(url + f'&page={page}', timeout=15)
         new_result = new_response.json()["rows"]
         result.extend(new_result)
-
-    write_func(tag, result)
+    return result

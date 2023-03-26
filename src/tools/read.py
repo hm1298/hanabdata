@@ -7,7 +7,18 @@ we disable the function docstring check from pylint.
 # pylint: disable=missing-function-docstring
 import json
 import csv
-from os import path
+from os import path, listdir
+
+
+def write(tag, data, data_type = 'user', processing_level = 'raw'):
+    file_path = f'./data/{processing_level}/{data_type}s/{tag}'
+    if processing_level == 'raw':
+        file_path = file_path + '.json'
+        _write_json(file_path, data)
+    else:
+        file_path = file_path + '.csv'
+        _write_csv(file_path, data)
+
 
 
 def read_user(username: str):
@@ -37,11 +48,30 @@ def write_seed(seed: str, data):
     seed_path = _get_seed_data_path(seed)
     _write_json(seed_path, data)
 
-
-def read_game_chunk(chunk: int):
-    chunk_path = _get_game_chunk_path(chunk)
+def read_chunk(chunk: int):
+    chunk_path = _get_chunk_path(chunk)
     data = _read_json(chunk_path)
     return data
+
+def write_game_to_chunk(game_id: int, data):
+    chunk = game_id // 1000
+    i = game_id % 1000
+    chunk_path = _get_chunk_path(chunk)
+    if not _file_exists(chunk_path):
+        data_to_update = [None] * 1000
+    else:
+        data_to_update = read_chunk(chunk)
+    data_to_update[i] = data
+    _write_json(chunk_path, data_to_update)
+
+def read_game_from_chunk(game_id: int):
+    chunk = game_id // 1000
+    i = chunk % 1000
+    chunk_path = _get_chunk_path(chunk)
+    if not _file_exists(chunk_path):
+        return None
+    data = read_chunk(chunk)
+    return data[i]
 
 def write_user_summary(username: str, summary):
     filepath = _get_user_summary_path(username)
@@ -77,6 +107,16 @@ def write_score_hunt(username: str, data):
     _write_csv(score_hunt_path, data)
 
 
+def get_game_ids():
+    games_path = './data/raw/games'
+    file_names = listdir(games_path)
+    game_ids = []
+    for file_name in file_names:
+        if file_name == '.gitkeep':
+            continue
+        game_ids.append(int(file_name[0:-5]))
+    return game_ids
+
 
 def _file_exists(filepath: str):
     return path.isfile(filepath)
@@ -90,7 +130,7 @@ def _get_game_data_path(game_id: int):
 def _get_seed_data_path(seed: str):
     return f'./data/raw/seeds/{seed}.json'
 
-def _get_game_chunk_path(chunk: int):
+def _get_chunk_path(chunk: int):
     return f'./data/preprocessed/games/{chunk}.json'
 
 def _get_user_summary_path(username: str):
@@ -107,6 +147,9 @@ def _get_seed_summary_path(seed: str):
 
 def _get_score_hunt_path(username: str):
     return f'./data/processed/score_hunts/{username}.csv'
+
+
+# Read and write JSONs and CSVs
 
 def _read_json(file_path):
     with open(file_path, encoding="utf8") as json_file:
