@@ -40,7 +40,7 @@ class Restriction:
     def _prune_duplicates(self, data):
         """Helper function for initialization."""
         for key in self.necessary_constraints:
-            if key in data and type(key) != dict:
+            if key in data and not isinstance(key, dict):
                 del data[key]
 
     def _evaluate(self, option, key=None):
@@ -54,7 +54,7 @@ class Restriction:
         """
         if option not in self.special_cases:
             return _equality_function
-        if key == None:
+        if key is None:
             return self.special_cases[option]
         if key not in self.special_cases[option]:
             return _equality_function
@@ -65,7 +65,7 @@ class Restriction:
         evaluated by a special function func, then this method saves
         func in class variable self.special_cases.
         """
-        if type(option) == dict:
+        if isinstance(option, dict):
             if option in self.special_cases:
                 self.special_cases[option] = {}
             for key in option:
@@ -106,7 +106,7 @@ class Restriction:
                     {option}.')
 
             element = data[option]
-            if type(element) != dict:
+            if not isinstance(element, dict):
                 value = self.necessary_constraints[option]
                 if self._evaluate(option)(element, value):
                     # data satisfies this option, so now check next
@@ -135,7 +135,7 @@ class Restriction:
         for option in self.optional_constraints:
             if option not in data:
                 continue
-            if type(option) != dict:
+            if not isinstance(option, dict):
                 value = self.necessary_constraints[option]
                 if data[option] != self._evaluate(option)(value):
                     return False

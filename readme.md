@@ -4,7 +4,12 @@ This repo is intended to help analyze player, seed, and game data from hanab.liv
 
 ## Dependencies
 
-Python3 -- likely pandas in the future, but we're not there yet. 
+- Python3 -- likely pandas in the future, but we're not there yet. 
+- [Requests](https://pypi.org/project/requests/)
+
+To install, run
+ $ pip install -r requirements.txt
+
 
 ## Scripts 
 

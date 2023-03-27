@@ -95,9 +95,9 @@ class GameState:
             inc = 1
         self.clue_token_count = min(8, self.clue_token_count + inc)
 
-    # function to call when the game progresses
 
     def implement_action(self, action):
+        """Increments the gamestate for when an action plays"""
         action_type = self._get_type(action)
 
         if action_type == "rank":
@@ -134,9 +134,9 @@ class GameState:
                 self.current_player_index + 1) % self.player_count
             self.turn += 1
 
-    # Replay state at prior turn
 
     def review_turn(self, turn_count):
+        """Replays a state at a prior turn"""
         if turn_count >= len(self.actions) or turn_count < 0:
             return False
 
