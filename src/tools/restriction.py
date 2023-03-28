@@ -102,7 +102,7 @@ class Restriction:
                 if not self.panic:
                     return False
                 print(data)
-                raise Exception(f'Something has gone terribly wrong. Missing \
+                raise KeyError(f'Something has gone terribly wrong. Missing \
                     {option}.')
 
             element = data[option]
@@ -121,7 +121,7 @@ class Restriction:
                         return False
                     print(data)
                     print(options)
-                    raise Exception(f'Something has gone terribly wrong. \
+                    raise KeyError(f'Something has gone terribly wrong. \
                         Missing {key} in {option}.')
 
                 value = self.necessary_constraints[option][key]
