@@ -33,11 +33,11 @@ def fetch_user_chunk(username: str, min_id = 0, max_id = 1000000, increment = 10
     next_start = min_id + increment
     end = next_start - 1
     data = []
-    
+
     while True:
         end = min(end, max_id)
         print(f'fetching games with IDs between {start} and {end}')
-        
+
         endpoint = f'{SITE}/history-full/{username}?start={start}&end={end}'
         try: 
             response = requests.get(endpoint, timeout=15).json()
@@ -53,7 +53,7 @@ def fetch_user_chunk(username: str, min_id = 0, max_id = 1000000, increment = 10
             break
 
     return data
-        
+
 def fetch_game(game_id: str):
     endpoint = f'https://hanabi.live/export/{game_id}'
     response = requests.get(endpoint, timeout=MAX_TIME).json()
@@ -71,9 +71,10 @@ def find_given_game(url: str, given: int):
     num_games = response["rows"]
 
     if given > num_games:
-        return
+        return 2
 
     #response = requests.get  #broken code, fix
+    return 1
 
 
 def _fetch_paginated(url: str, write_to: str, max_games=None):
@@ -83,12 +84,12 @@ def _fetch_paginated(url: str, write_to: str, max_games=None):
     Also can limit number of games downloaded. If the limit applies,
     then the oldest games will be downloaded.
     """
-
-    
     print("Reached pagination")
 
     if max_games:
         game_id_limit = find_given_game(url, max_games)
+        page_limit = game_id_limit
+    # method needs to be edited or deleted
 
     response = requests.get(url, timeout=MAX_TIME).json()
     result = response["rows"]

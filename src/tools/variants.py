@@ -4,12 +4,10 @@ This contains the basic logic for dealing with variants.
 # pylint: disable=invalid-name
 
 import json
-import random
 import requests
 from tools.fetch import MAX_TIME
 
 
-# pylint: disable-next=line-too-long
 VARIANT_URL = "https://raw.githubusercontent.com/Hanabi-Live/hanabi-live/main/packages/data/src/json/variants.json"
 VARIANT_PATH = './tools/variants.json'
 
@@ -20,7 +18,7 @@ class VariantJSON(json.JSONEncoder):
         return o.__dict__
 
 
-class Variant(object):
+class Variant:
     """Defines a class for variants."""
     # pylint: disable-next=redefined-builtin
     def __init__(self, id, name, suits, *args, **kwargs):
@@ -36,24 +34,31 @@ def update_variants():
         json.dump(response, json_file)
     print("Updated variants.")
 
-if random.random() > 0.98:
-    update_variants()
-
 def get_variant_list():
-    """Returns Variant list as saved in file."""
-    with open(VARIANT_PATH, encoding="utf8") as json_file:
-        variant_list = json.load(json_file)
-    return variant_list
+    """Returns list of Variant objects."""
+    try:
+        with open(VARIANT_PATH, encoding="utf8") as json_file:
+            json_list = json.load(json_file)
+        variant_list = []
+        for variant_data in json_list:
+            variant_list.append(Variant(**variant_data))
+        return variant_list
+    except FileNotFoundError:
+        update_variants()
+        return get_variant_list()
 
 def find_variant(variant_id):
     """Returns Variant object with given variant_id."""
 
-    correct_variant_data = None
+    correct_variant = None
     for variant in VARIANT_LIST:
-        if variant["id"] == variant_id:
-            correct_variant_data = variant
+        if variant.id == variant_id:
+            correct_variant = variant
 
-    found_variant = Variant(**correct_variant_data)
-    return found_variant
+    if not correct_variant:
+        update_variants()
+        return find_variant(variant_id)
+
+    return correct_variant
 
 VARIANT_LIST = get_variant_list()

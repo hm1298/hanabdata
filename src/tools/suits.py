@@ -4,7 +4,7 @@ This contains the basic logic for dealing with suits.
 
 import json
 import requests
-from tools.fetch import MAX_TIME
+from fetch import MAX_TIME
 
 
 SUIT_URL = "https://raw.githubusercontent.com/Hanabi-Live/hanabi-live/main/packages/data/src/json/suits.json"
@@ -17,7 +17,7 @@ class SuitJSON(json.JSONEncoder):
         return o.__dict__
 
 
-class Suit(object):
+class Suit:
     """Defines a class for variants."""
     # pylint: disable-next=redefined-builtin
     def __init__(self, name, id, abbreviation):
@@ -27,10 +27,17 @@ class Suit(object):
 
 
 def get_suit_list():
-    """Returns suit list as saved in file."""
-    with open(SUIT_PATH, encoding="utf8") as json_file:
-        suit_list = json.load(json_file)
-    return suit_list
+    """Returns list of Suit objects."""
+    try:
+        with open(SUIT_PATH, encoding="utf8") as json_file:
+            json_list = json.load(json_file)
+        suit_list = []
+        for suit_data in json_list:
+            suit_list.append(Suit(**suit_data))
+        return suit_list
+    except FileNotFoundError:
+        update_suits()
+        return get_suit_list()
 
 def update_suits():
     """Pulls from github."""
@@ -42,11 +49,17 @@ def update_suits():
 def find_suit(suit_id):
     """Returns Suit object with given suit_id."""
 
-    correct_suit_data = None
+    correct_suit = None
     for suit in SUIT_LIST:
-        if suit["id"] == suit_id:
-            correct_suit_data = suit
+        if suit.id == suit_id:
+            correct_suit = suit
 
-    found_suit = Suit(**correct_suit_data)
+    if not correct_suit:
+        update_suits()
+        return find_suit(suit_id)
+
+    return correct_suit
 
 SUIT_LIST = get_suit_list()
+
+print(SUIT_LIST[10])
