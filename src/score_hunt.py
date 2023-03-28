@@ -1,24 +1,24 @@
 import datetime
 from tools.read import read_user, write_score_hunt
+from tools.restriction import STANDARD_2P
 
 
 def analyze_2P_score_hunt(username: str):
     """Reasons this is bad:
-    - does not account for cheating options
     - makes a dictionary for JSON first, then converts to csv afterwards (unnecessary)
     - extraction of number of suits
-
-    
     """
 
     data = read_user(username)
-    
+
     score_hunt = {}
     # we cycle through in forwards chronological order
     for game in reversed(data):
-        if game["options"]["numPlayers"] != 2:
+        if not STANDARD_2P.validate(game):
+            # note: the standard restriction throws out games with less
+            # than 3 turns. this may boost some player's numbers to an
+            # unfair extent, depending on scorehunting strategy
             continue
-        #game_id = game['id']
         variant = game['options']['variantName']
         variant_id = game['options']['variantID']
         start_time = datetime.datetime.fromisoformat(game['datetimeStarted'])

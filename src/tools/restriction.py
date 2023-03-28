@@ -150,7 +150,7 @@ class Restriction:
         return True
 
 
-def get_standard_restrictions():
+def get_standard_restrictions(num_players=None):
     """Returns a Restriction that removes different games, cheaters,
     speedrunners, and games that were ended very early.
     """
@@ -167,6 +167,8 @@ def get_standard_restrictions():
         },
         "numTurns": 3
     }
+    if num_players:
+        only_good_games["options"]["numPlayers"] = num_players
     # WARNING: I'm not sure where numTurns vs turn_count is used, so
     # this may not be compatible over different formats. In that case,
     # such checks might need to be moved to optional if data processing
@@ -180,3 +182,4 @@ def get_standard_restrictions():
 STANDARD_GAME_RESTRICTION = get_standard_restrictions()
 MAX_SCORE_ONLY = Restriction({"score": 25}, {})
 MAX_SCORE30_ONLY = Restriction({"score": 30}, {})
+STANDARD_2P = get_standard_restrictions(2)
