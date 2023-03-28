@@ -61,6 +61,6 @@ def _find_missing_games(username: str):
     ids = [row["id"] for row in data]
     missing_ids = []
     for game_id in ids:
-        if read.read_game_from_chunk(game_id) is None:
-            missing_ids.append(game_id[0:-4])
+        if not read.read_game_from_chunk(game_id):
+            missing_ids.append(game_id)
     return missing_ids

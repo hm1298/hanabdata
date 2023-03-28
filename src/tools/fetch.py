@@ -13,9 +13,9 @@ def fetch_user(username: str, start_id = 0):
     If hanab.live does not respond in time, attempts to download paginated data."""
 
     if start_id > 0:    
-        endpoint = f'{SITE}/api/v1/history-full/{username}?start={start_id}'
+        endpoint = f'{SITE}/history-full/{username}?start={start_id}'
     else: 
-        endpoint = f'{SITE}/api/v1/history-full/{username}'
+        endpoint = f'{SITE}/history-full/{username}'
     try: 
         response = requests.get(endpoint, timeout=15).json()
         return response  
@@ -38,7 +38,7 @@ def fetch_user_chunk(username: str, min_id = 0, max_id = 1000000, increment = 10
         end = min(end, max_id)
         print(f'fetching games with IDs between {start} and {end}')
         
-        endpoint = f'{SITE}/api/v1/history-full/{username}?start={start}&end={end}'
+        endpoint = f'{SITE}/history-full/{username}?start={start}&end={end}'
         try: 
             response = requests.get(endpoint, timeout=15).json()
         except requests.exceptions.ReadTimeout as error:
@@ -73,7 +73,7 @@ def find_given_game(url: str, given: int):
     if given > num_games:
         return
 
-    response = requests.get  #broken code, fix
+    #response = requests.get  #broken code, fix
 
 
 def _fetch_paginated(url: str, write_to: str, max_games=None):
