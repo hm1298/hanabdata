@@ -88,7 +88,7 @@ def _fetch_paginated(url: str, write_to: str, max_games=None):
     print("Reached pagination")
 
     if max_games:
-        game_id_limit = find_nth_game(url, max_games)
+        game_id_limit = find_given_game(url, max_games)
 
     response = requests.get(url, timeout=MAX_TIME).json()
     result = response["rows"]
