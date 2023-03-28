@@ -1,12 +1,12 @@
 import datetime
 from tools.read import read_user, write_score_hunt
 from tools.restriction import STANDARD_2P
+from tools.variants import find_variant
 
 
 def analyze_2P_score_hunt(username: str):
     """Reasons this is bad:
     - makes a dictionary for JSON first, then converts to csv afterwards (unnecessary)
-    - extraction of number of suits
     """
 
     data = read_user(username)
@@ -26,14 +26,7 @@ def analyze_2P_score_hunt(username: str):
         score = game['score']
         duration = (end_time - start_time).total_seconds()
 
-        suit_count = 5
-        for char in variant:
-            try:
-                suit_count = int(char)
-                break
-            except ValueError:
-                continue
-        max_score = 5 * suit_count
+        max_score = 5 * len(find_variant(variant_id).suits)
         win = (score == max_score)
 
 
