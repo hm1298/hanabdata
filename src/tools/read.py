@@ -66,7 +66,7 @@ def write_game_to_chunk(game_id: int, data):
 
 def read_game_from_chunk(game_id: int):
     chunk = game_id // 1000
-    i = chunk % 1000
+    i = game_id % 1000
     chunk_path = _get_chunk_path(chunk)
     if not _file_exists(chunk_path):
         return None
