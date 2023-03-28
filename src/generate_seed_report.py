@@ -1,8 +1,8 @@
 """Prompts user for seed and generates report."""
 
-from tools.update import update_seed
-from tools.read import read_seed, write_seed_summary, seed_data_exists
 from tools.parse import get_noncheating_options
+from tools.io.update import update_seed
+from tools.io.read import read_seed, write_seed_summary, seed_data_exists
 
 
 def generate_seed_report(seed : str):

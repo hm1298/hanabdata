@@ -5,11 +5,11 @@ This contains the basic logic for dealing with variants.
 
 import json
 import requests
-from tools.fetch import MAX_TIME
+from tools.io.fetch import MAX_TIME
 
 
 VARIANT_URL = "https://raw.githubusercontent.com/Hanabi-Live/hanabi-live/main/packages/data/src/json/variants.json"
-VARIANT_PATH = './tools/variants.json'
+VARIANT_PATH = './docs/variants.json'
 
 
 class VariantJSON(json.JSONEncoder):

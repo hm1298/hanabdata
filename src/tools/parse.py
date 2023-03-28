@@ -1,8 +1,8 @@
 """This module contains tools to take raw JSON data and 
 process it into something more useful to us mortals"""
 
-from tools.gamestate import GameState as G
-from tools import read
+from game.gamestate import GameState as G
+from .io import read
 
 
 class UserData:

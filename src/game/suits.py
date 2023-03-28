@@ -4,11 +4,11 @@ This contains the basic logic for dealing with suits.
 
 import json
 import requests
-from fetch import MAX_TIME
+from tools.io.fetch import MAX_TIME
 
 
 SUIT_URL = "https://raw.githubusercontent.com/Hanabi-Live/hanabi-live/main/packages/data/src/json/suits.json"
-SUIT_PATH = './tools/suits.json'
+SUIT_PATH = './docs/suits.json'
 
 
 class SuitJSON(json.JSONEncoder):

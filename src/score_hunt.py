@@ -1,7 +1,7 @@
 import datetime
-from tools.read import read_user, write_score_hunt
 from tools.restriction import STANDARD_2P
-from tools.variants import find_variant
+from game.variants import find_variant
+from tools.io.read import read_user, write_score_hunt
 
 
 def analyze_2P_score_hunt(username: str):

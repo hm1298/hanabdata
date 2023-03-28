@@ -3,10 +3,10 @@
 Writes to src/data/processed/variants/winrates/<file>.
 """
 
-from tools.update import update_seed
-from tools.read import seed_data_exists
 from tools.parse import generate_success_rate_summary
 from tools.restriction import STANDARD_GAME_RESTRICTION, MAX_SCORE_ONLY
+from tools.io.update import update_seed
+from tools.io.read import seed_data_exists
 
 def generate_success_rate_report(seed_prefix, limit, restriction, goal):
     """Writes to a CSV the success rate of a given goal among all games
