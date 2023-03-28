@@ -1,6 +1,6 @@
 import datetime
-from tools.restriction import STANDARD_2P
 from game.variants import find_variant
+from tools.restriction import STANDARD_2P
 from tools.io.read import read_user, write_score_hunt
 
 

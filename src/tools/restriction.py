@@ -6,6 +6,16 @@ and optional features for data that has been processed at different
 points in time.
 """
 
+_NONCHEATING_OPTIONS = {"options": {
+    "startingPlayer": 0,
+    "deckPlays": False,
+    "emptyClues": False,
+    "oneExtraCard": False,
+    "oneLessCard": False,
+    "allOrNothing": False,
+    "detrimentalCharacters": False,
+}}
+
 def _equality_function(x, y): 
     return x == y
 
@@ -150,6 +160,7 @@ class Restriction:
         return True
 
 
+# TODO: deepcopy NONCHEATING_OPTIONS in here to clean up code
 def get_standard_restrictions(num_players=None):
     """Returns a Restriction that removes different games, cheaters,
     speedrunners, and games that were ended very early.
@@ -179,6 +190,7 @@ def get_standard_restrictions(num_players=None):
 
     return standard
 
+NONCHEATING_RESTRICTION = Restriction(_NONCHEATING_OPTIONS, {"cheated": False})
 STANDARD_GAME_RESTRICTION = get_standard_restrictions()
 MAX_SCORE_ONLY = Restriction({"score": 25}, {})
 MAX_SCORE30_ONLY = Restriction({"score": 30}, {})

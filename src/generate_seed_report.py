@@ -1,6 +1,6 @@
 """Prompts user for seed and generates report."""
 
-from tools.parse import get_noncheating_options
+from tools.restriction import NONCHEATING_RESTRICTION
 from tools.io.update import update_seed
 from tools.io.read import read_seed, write_seed_summary, seed_data_exists
 
@@ -20,15 +20,10 @@ def generate_seed_report(seed : str):
         'game_id', 'score', 'turn_count', 'player_names', 'cheated',
         'speedrun', 'timed', 'link'
     ]]
-    noncheating_options = get_noncheating_options()
     for game in data:
         options = game["options"]
 
-        cheated = False
-        for key in options:
-            if key in noncheating_options:
-                if options[key] != noncheating_options[key]:
-                    cheated = True
+        cheated = NONCHEATING_RESTRICTION.validate(game)
 
         game_data = [
             game["id"], game["score"], game["numTurns"], game["playerNames"],
