@@ -5,7 +5,7 @@ This contains the basic logic for dealing with variants.
 
 import json
 import requests
-from tools.io.fetch import MAX_TIME
+from hanabdata.tools.io.fetch import MAX_TIME
 
 
 VARIANT_URL = "https://raw.githubusercontent.com/Hanabi-Live/hanabi-live/main/packages/data/src/json/variants.json"

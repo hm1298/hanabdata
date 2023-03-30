@@ -1,8 +1,8 @@
 """Prompts user for seed and generates report."""
 
-from tools.restriction import NONCHEATING_RESTRICTION
-from tools.io.update import update_seed
-from tools.io.read import read_seed, write_seed_summary, seed_data_exists
+from hanabdata.tools.restriction import NONCHEATING_RESTRICTION
+from hanabdata.tools.io.update import update_seed
+from hanabdata.tools.io.read import read_seed, write_seed_summary, seed_data_exists
 
 
 def generate_seed_report(seed : str):

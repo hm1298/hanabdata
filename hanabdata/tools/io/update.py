@@ -1,5 +1,5 @@
 """Tools to check status of and update data. Generally used by scripts"""
-from tools.io import fetch, read
+from . import fetch, read
 
 def update_user(username: str):
     """Downloads and stores user summary data, then detects, downloads, and stores data from any 

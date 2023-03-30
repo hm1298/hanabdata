@@ -4,7 +4,7 @@ This contains the basic logic for dealing with suits.
 
 import json
 import requests
-from tools.io.fetch import MAX_TIME
+from hanabdata.tools.io.fetch import MAX_TIME
 
 
 SUIT_URL = "https://raw.githubusercontent.com/Hanabi-Live/hanabi-live/main/packages/data/src/json/suits.json"

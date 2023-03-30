@@ -1,7 +1,7 @@
 """This module contains tools to take raw JSON data and 
 process it into something more useful to us mortals"""
 
-from game.gamestate import GameState as G
+from hanabdata.game.gamestate import GameState as G
 from .io import read
 
 

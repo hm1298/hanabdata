@@ -1,7 +1,7 @@
 import datetime
-from game.variants import find_variant
-from tools.restriction import STANDARD_2P
-from tools.io.read import read_user, write_score_hunt
+from hanabdata.game.variants import find_variant
+from hanabdata.tools.restriction import STANDARD_2P
+from hanabdata.tools.io.read import read_user, write_score_hunt
 
 
 def analyze_2P_score_hunt(username: str):

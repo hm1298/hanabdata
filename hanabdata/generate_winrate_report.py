@@ -3,10 +3,10 @@
 Writes to src/data/processed/variants/winrates/<file>.
 """
 
-from tools.parse import generate_success_rate_summary
-from tools.restriction import STANDARD_GAME_RESTRICTION, MAX_SCORE_ONLY
-from tools.io.update import update_seed
-from tools.io.read import seed_data_exists
+from hanabdata.tools.parse import generate_success_rate_summary
+import hanabdata.tools.restriction as r
+from hanabdata.tools.io.update import update_seed
+from hanabdata.tools.io.read import seed_data_exists
 
 def generate_success_rate_report(seed_prefix, limit, restriction, goal):
     """Writes to a CSV the success rate of a given goal among all games
@@ -30,5 +30,5 @@ def generate_success_rate_report(seed_prefix, limit, restriction, goal):
 
 N = 191
 print(f'Finding the winrate among the first {N} No Variant games.')
-generate_success_rate_report("p2v0s", N, STANDARD_GAME_RESTRICTION, \
-    MAX_SCORE_ONLY)
+generate_success_rate_report("p2v0s", N, r.STANDARD_GAME_RESTRICTION, \
+   r.MAX_SCORE_ONLY)
