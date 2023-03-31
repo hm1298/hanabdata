@@ -6,6 +6,8 @@ and optional features for data that has been processed at different
 points in time.
 """
 
+import hanabdata.game.variants as variants
+
 _NONCHEATING_OPTIONS = {"options": {
     "startingPlayer": 0,
     "deckPlays": False,
@@ -95,7 +97,7 @@ class Restriction:
 
     def validate(self, data):
         """This function is the purpose of the entire class.
-        
+
         Takes dict data as input (commonly JSONs or processed game data)
         and returns True if and only if the data satisfies all
         constraints specified in this class. If the self.panic option
@@ -159,6 +161,24 @@ class Restriction:
 
         return True
 
+
+def has_winning_score(game):
+    """Returns True if dictionary game contains key 'score' and key
+    uniquely identifying a variant such that the value of score is the
+    maximum possible score in the variant.
+    """
+    if "score" not in game:
+        return False
+    if "variantID" not in game:
+        if "seed" not in game:
+            return False
+        seed = game["seed"]
+        variant_id = int(seed[3:seed.index("s")])
+    else:
+        variant_id = game["variantID"]
+
+    max_score = variants.find_variant(variant_id).get_max_score()
+    return game["score"] == max_score
 
 # TODO: deepcopy NONCHEATING_OPTIONS in here to clean up code
 def get_standard_restrictions(num_players=None):

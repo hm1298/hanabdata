@@ -26,6 +26,10 @@ class Variant:
         self.name = name
         self.suits = suits
 
+    def get_max_score(self):
+        """Returns the maximum possible score in this variant."""
+        return 5 * len(self.suits)
+
 
 def update_variants():
     """Pulls from github. To fold into io."""
@@ -34,31 +38,29 @@ def update_variants():
         json.dump(response, json_file)
     print("Updated variants.")
 
-def get_variant_list():
+def get_variant_dict():
     """Returns list of Variant objects."""
     try:
         with open(VARIANT_PATH, encoding="utf8") as json_file:
             json_list = json.load(json_file)
-        variant_list = []
+        variant_dict = {}
         for variant_data in json_list:
-            variant_list.append(Variant(**variant_data))
-        return variant_list
+            variant_dict[variant_data["id"]] = Variant(**variant_data)
+        return variant_dict
     except FileNotFoundError:
         update_variants()
-        return get_variant_list()
+        return get_variant_dict()
 
 def find_variant(variant_id):
     """Returns Variant object with given variant_id."""
 
-    correct_variant = None
-    for variant in VARIANT_LIST:
-        if variant.id == variant_id:
-            correct_variant = variant
-
-    if not correct_variant:
+    if variant_id in VARIANT_DICT:
+        correct_variant = VARIANT_DICT[variant_id]
+    else:
         update_variants()
-        return find_variant(variant_id)
+        # throws an Error if variant_id does not exist
+        return VARIANT_DICT[variant_id]
 
     return correct_variant
 
-VARIANT_LIST = get_variant_list()
+VARIANT_DICT = get_variant_dict()
