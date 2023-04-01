@@ -6,22 +6,37 @@ import requests
 SITE = "https://hanabi.live/api/v1"
 ROWS = 100  # note the API cannot exceed size of 100
 MAX_TIME = 12
+CHUNK_SIZE = 4000
 
+# strictly speaking, it's more helpful to pass in BOTH the number of
+# games that have been downloaded AND the lowest possible game ID of an
+# "undownloaded" game. not sure what dependencies, so leaving for now
 def fetch_user(username: str, start_id = 0):
     """Downloads a user's data from hanab.live. First tries to find data already stored inorder to not download 
     duplicate data. If no data is stored, tries to get down load all user data. 
     If hanab.live does not respond in time, attempts to download paginated data."""
+    endpoint = f'{SITE}/history-full/{username}'
+    if start_id > 0:
+        try:
+            response = requests.get(endpoint + f'?start={start_id}', \
+                timeout=MAX_TIME).json()
+            return response
+        except requests.exceptions.ReadTimeout:
+            print('The request timed out! Attempting to to split games into smaller chunks...')
+    return fetch_in_chunks(endpoint, start_id)
 
-    if start_id > 0:    
-        endpoint = f'{SITE}/history-full/{username}?start={start_id}'
-    else: 
-        endpoint = f'{SITE}/history-full/{username}'
-    try: 
-        response = requests.get(endpoint, timeout=15).json()
-        return response  
-    except requests.exceptions.ReadTimeout:
-        print('The request timed out! Attempting to to split games into smaller chunks...')
-        return fetch_user_chunk(username, min_id = start_id)
+def fetch_in_chunks(url: str, start: int, num_rows=CHUNK_SIZE):
+    """Checks lesser API for game IDs and paginates full API based on
+    those ranges, with num_rows games per page.
+    """
+    result, game_index, next_start = {}, num_rows, None
+    while True:
+        end, next_start = find_given_game(url, game_index)
+        if next_start is None:
+            endpoint = url + f'?start={start}'
+            return result
+        endpoint = url + f'?start={start}&end={end}'
+
 
 def fetch_user_chunk(username: str, min_id = 0, max_id = 1000000, increment = 100000):
     """
@@ -65,17 +80,27 @@ def fetch_seed(seed: str):
     return response
 
 def find_given_game(url: str, given: int):
-    """Returns the nth Game ID in the API. Returns none if too large."""
-    safe_url = url.replace("-full", "") + f'?size={ROWS}'
+    """Returns the nth and an adjacent Game ID in the API.
+
+    Chooses the adjacent game to be larger if both are on the same page
+    of the paginated API. Otherwise, chooses the smaller game. Chooses
+    None if no such game exists.
+
+    Returns a tuple (x, y) such that x > y or y is None.
+
+    Returns none if too large.
+    """
+    page_num, page_index = divmod(given - 1, ROWS)
+    safe_url = url.replace("-full", "") + f'?size={ROWS}&page={page_num}'
     response = requests.get(safe_url, timeout=MAX_TIME).json()
-    num_games = response["rows"]
-
-    if given > num_games:
-        return 2
-
-    #response = requests.get  #broken code, fix
-    return 1
-
+    game_list = response["rows"]
+    if game_list or len(game_list) <= page_index:
+        return None, None
+    if len(game_list) > page_index:
+        if page_index == 0:
+            return game_list[0]["id"], None
+        return game_list[page_index - 1]["id"], game_list[page_index]["id"]
+    return game_list[page_index]["id"], game_list[page_index + 1]["id"]
 
 def _fetch_paginated(url: str, write_to: str, max_games=None):
     """Uses the paginated API to download JSON data. Mainly intended for
