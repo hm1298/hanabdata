@@ -21,7 +21,7 @@ class GameState:
         self.suit_count = 1 + max([card["suitIndex"] for card in self.deck])
         try:
             self.variant = data["options"]["variant"]
-        except:
+        except KeyError:
             self.variant = "No Variant"
         self.player_count = len(self.players)
         self.hand_size = _get_hand_size(self.data)
