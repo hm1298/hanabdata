@@ -106,6 +106,11 @@ def write_score_hunt(username: str, data):
     score_hunt_path = _get_score_hunt_path(username)
     _write_csv(score_hunt_path, data)
 
+def write_score_hunt_summary(data):
+    # Note Hanab Live does not permit usernames with '(' or ')', so
+    # there is no risk of collision.
+    write_score_hunt("(SUMMARY)", data)
+
 
 def get_game_ids():
     games_path = './data/raw/games'
@@ -116,6 +121,12 @@ def get_game_ids():
             continue
         game_ids.append(int(file_name[0:-5]))
     return game_ids
+
+def get_score_hunt(username: str):
+    hunt_path = f'./data/processed/score_hunts/{username}.csv'
+    if not _file_exists(hunt_path):
+        return None
+    return _read_csv(hunt_path)
 
 
 def _file_exists(filepath: str):
