@@ -1,3 +1,8 @@
+"""Determines number of attempts and total duration of play time
+leading up to a player's first win in each variant. Prints to a CSV in
+data/processed/score_hunts.
+"""
+
 import datetime
 from hanabdata.tools.restriction import STANDARD_2P, has_winning_score
 from hanabdata.tools.io.read import read_user, write_score_hunt

@@ -153,7 +153,12 @@ def _get_score_hunt_path(username: str):
 
 def _read_json(file_path):
     with open(file_path, encoding="utf8") as json_file:
-        data = json.load(json_file)
+        try:
+            data = json.load(json_file)
+        except BaseException as e:
+            print(e)
+            print(f"The offending file is found at: {file_path}")
+            raise e
     return data
 
 def _write_json(file_path, txt):

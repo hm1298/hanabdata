@@ -4,7 +4,7 @@ import requests
 
 SITE = "https://hanab.live/api/v1"
 ROWS = 100  # note the API cannot exceed size of 100
-MAX_TIME = 8
+MAX_TIME = 10
 CHUNK_SIZE = 2048
 
 # strictly speaking, it's more helpful to pass in BOTH the number of
