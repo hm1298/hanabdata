@@ -70,7 +70,7 @@ def fetch_in_chunks(url: str, lower_limit: int, num_rows=CHUNK_SIZE, end=None):
         end = start - 1
     return result
 
-def fetch_url(url):
+def fetch_url(url, verbose=True):
     """Attempts to fetch from Hanab Live.
 
     Returns a tuple of two items:
@@ -78,7 +78,8 @@ def fetch_url(url):
         - Exception type if an error occurred, else None
     """
     try:
-        print(f"Fetching from {url}")
+        if verbose:
+            print(f"Fetching from {url}")
         return requests.get(url, timeout=MAX_TIME).json(), None
     except BaseException as e:
         print(f"Unable to complete request to {url}")
@@ -139,9 +140,9 @@ def _fetch_paginated(url: str, write_to: str, max_games=None):
         result.extend(new_result)
     return result
 
-def _fetch_url_or_error(url):
+def _fetch_url_or_error(url, verbose=False):
     """Fetches URL. Raises error if unable."""
-    response, error = fetch_url(url)
+    response, error = fetch_url(url, verbose)
     if error:
         raise error
     return response

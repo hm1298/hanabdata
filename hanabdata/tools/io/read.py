@@ -74,6 +74,26 @@ def read_game_from_chunk(game_id: int):
     data = read_chunk(chunk)
     return data[i]
 
+def read_games_from_chunk(games: list, chunk: int):
+    """Assumes games is sorted reverse chronologically.
+
+    Also assumes all entries are >= the least ID in chunk.
+
+    Returns a dict:
+        keys - IDs from games, inserted in increasing order
+        values - game data for matching ID from file (could be None)
+    """
+    if _file_exists(_get_chunk_path(chunk)):
+        data = read_chunk(chunk)
+    else:
+        data = [None] * 1000
+    games_dict = {}
+    while games and games[-1] < (chunk + 1) * 1000:
+        game_id = games.pop()
+        assert game_id >= chunk * 1000
+        games_dict[game_id] = data[game_id % 1000]
+    return games_dict
+
 def write_user_summary(username: str, summary):
     filepath = _get_user_summary_path(username)
     _write_csv(filepath, summary)

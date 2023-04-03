@@ -58,9 +58,11 @@ def port_games():
 
 def _find_missing_games(username: str):
     data = read.read_user(username)
-    ids = [row["id"] for row in data]
+    ids = sorted([row["id"] for row in data], reverse=True)
     missing_ids = []
-    for game_id in ids:
-        if not read.read_game_from_chunk(game_id):
-            missing_ids.append(game_id)
+    while ids:
+        games_dict = read.read_games_from_chunk(ids, ids[-1] // 1000)
+        for game_id, game in games_dict.items():
+            if game is None:
+                missing_ids.append(game_id)
     return missing_ids
