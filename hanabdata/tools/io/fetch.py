@@ -1,12 +1,11 @@
 """"Handles all calls to hanab.live. Returns JSONs."""
-# pylint: disable=missing-function-docstring
 
 import requests
 
-SITE = "https://hanabi.live/api/v1"
+SITE = "https://hanab.live/api/v1"
 ROWS = 100  # note the API cannot exceed size of 100
-MAX_TIME = 12
-CHUNK_SIZE = 4000
+MAX_TIME = 8
+CHUNK_SIZE = 2048
 
 # strictly speaking, it's more helpful to pass in BOTH the number of
 # games that have been downloaded AND the lowest possible game ID of an
@@ -16,26 +15,56 @@ def fetch_user(username: str, start_id = 0):
     duplicate data. If no data is stored, tries to get down load all user data. 
     If hanab.live does not respond in time, attempts to download paginated data."""
     endpoint = f'{SITE}/history-full/{username}'
-    if start_id > 0:
-        try:
-            response = requests.get(endpoint + f'?start={start_id}', \
-                timeout=MAX_TIME).json()
-            return response
-        except requests.exceptions.ReadTimeout:
-            print('The request timed out! Attempting to to split games into smaller chunks...')
+    attempted_fetch, status = fetch_url(endpoint + f'?start={start_id}')
+    if status:
+        return attempted_fetch
     return fetch_in_chunks(endpoint, start_id)
 
-def fetch_in_chunks(url: str, start: int, num_rows=CHUNK_SIZE):
+def fetch_in_chunks(url: str, lower_limit: int, num_rows=CHUNK_SIZE, end=None):
     """Checks lesser API for game IDs and paginates full API based on
     those ranges, with num_rows games per page.
     """
-    result, game_index, next_start = {}, num_rows, None
+    result, game_index = [], num_rows
     while True:
-        end, next_start = find_given_game(url, game_index)
-        if next_start is None:
-            endpoint = url + f'?start={start}'
-            return result
-        endpoint = url + f'?start={start}&end={end}'
+        start, next_end = find_given_game(url, game_index)
+        endpoint = url + f'?start={max(start, lower_limit)}'
+        if end is not None:
+            # CURRENTLY, THE CODE WILL ERROR IF IT FINDS A GOOD CHUNK
+            # SIZE BUT THEN RUNS INTO A PROBLEM LATER--FOR INSTANCE, IF
+            # THE SERVER STARTS LIMITING REQUESTS. THIS IS AN EASY FIX,
+            # BUT IT IS NOT YET CODED!
+            if end < start:
+                print("Something strange happened..")
+                raise AssertionError("end < start")
+            endpoint += f'&end={end}'
+        attempted_fetch, status = fetch_url(endpoint)
+        if not status:
+            if num_rows < 100:
+                print(f"Chunk size of {num_rows} is too low.")
+                raise AssertionError("It appears the site is down..")
+            print(f"Reducing chunk size to {num_rows//2}")
+            return result + fetch_in_chunks(url, lower_limit, \
+                num_rows=num_rows//2, end=end)
+        result += attempted_fetch
+        if next_end is None:
+            break
+        game_index += num_rows
+        end = next_end
+    return result
+
+def fetch_url(url):
+    """Attempts to fetch from Hanab Live.
+
+    Returns a list of JSONs (dicts) if successful.
+
+    Handles errors. Returns None if unsuccessful.
+    """
+    try:
+        print(f"Fetching from {url}")
+        return requests.get(url, timeout=MAX_TIME).json(), True
+    except requests.exceptions.ReadTimeout:
+        print(f"Unable to connect to {url}")
+        return [], False
 
 
 def fetch_user_chunk(username: str, min_id = 0, max_id = 1000000, increment = 100000):
@@ -70,11 +99,13 @@ def fetch_user_chunk(username: str, min_id = 0, max_id = 1000000, increment = 10
     return data
 
 def fetch_game(game_id: str):
+    """Fetches a game."""
     endpoint = f'https://hanabi.live/export/{game_id}'
     response = requests.get(endpoint, timeout=MAX_TIME).json()
     return response
 
 def fetch_seed(seed: str):
+    """Fetches a seed."""
     endpoint = f'{SITE}/seed-full/{seed}'
     response = requests.get(endpoint, timeout=MAX_TIME).json()
     return response
@@ -88,14 +119,14 @@ def find_given_game(url: str, given: int):
 
     Returns a tuple (x, y) such that x > y or y is None.
 
-    Returns none if too large.
+    Returns 0 if too large.
     """
     page_num, page_index = divmod(given - 1, ROWS)
     safe_url = url.replace("-full", "") + f'?size={ROWS}&page={page_num}'
     response = requests.get(safe_url, timeout=MAX_TIME).json()
     game_list = response["rows"]
-    if game_list or len(game_list) <= page_index:
-        return None, None
+    if game_list is None or len(game_list) <= page_index:
+        return 0, None
     if len(game_list) > page_index:
         if page_index == 0:
             return game_list[0]["id"], None
