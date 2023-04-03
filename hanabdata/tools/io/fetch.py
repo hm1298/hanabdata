@@ -22,7 +22,7 @@ def fetch_user(username: str, start_id = 0):
 
 def fetch_in_chunks(url: str, lower_limit: int, num_rows=CHUNK_SIZE, end=None):
     """Checks lesser API for game IDs and paginates full API based on
-    those ranges, with num_rows games per page.
+    those ranges, with num_rows games per page. Pulls games in reverse chronological order.
     """
     result, game_index = [], num_rows
     while True:
@@ -66,37 +66,6 @@ def fetch_url(url):
         print(f"Unable to connect to {url}")
         return [], False
 
-
-def fetch_user_chunk(username: str, min_id = 0, max_id = 1000000, increment = 100000):
-    """
-    This function is NOT optimized, future proof, or guaranteed to work with all users! 
-    Once hanab.live exceeds 10^6 games it will stop working!
-    Games likely to also be sorted incorrectly!
-    """
-    start = min_id
-    next_start = min_id + increment
-    end = next_start - 1
-    data = []
-
-    while True:
-        end = min(end, max_id)
-        print(f'fetching games with IDs between {start} and {end}')
-
-        endpoint = f'{SITE}/history-full/{username}?start={start}&end={end}'
-        try: 
-            response = requests.get(endpoint, timeout=15).json()
-        except requests.exceptions.ReadTimeout as error:
-            if increment <= 1000:
-                raise ConnectionError('The request timed out! \
-                                      This is either your internet or the server being slow') from error
-            print('The request timed out! This could be due to asking the server for too much. \
-                  Attempting to split request into smaller chunks...')
-            response = fetch_user_chunk(username, min_id = start, max_id = end, increment = increment // 10)
-        data = response + data
-        if end == max_id:
-            break
-
-    return data
 
 def fetch_game(game_id: str):
     """Fetches a game."""
