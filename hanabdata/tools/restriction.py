@@ -169,22 +169,27 @@ def has_winning_score(game):
     """
     if "score" not in game:
         return False
-    if "variantID" not in game:
+
+    if "options" in game:
+        if "variantID" in game["options"]:
+            variant_id = game["options"]["variantID"]
+        # TODO: add a check for variantName
+    elif "seed" in game:
+        seed = game["seed"]
         try:
-            seed = game["seed"]
             if seed == "JSON":
                 return False
             # both indices are necessary to handle "legacy-pXvYsZ" seed
             variant_id = int(seed[seed.index("v") + 1:seed.index("s")])
-        except KeyError:
-            return False
         except Exception as e:
             print(e)
             print(game)
             print(game["seed"])
             raise e
-    else:
+    elif "variantID" in game:
         variant_id = game["variantID"]
+    else:
+        return False
 
     max_score = variants.find_variant(variant_id).get_max_score()
     return game["score"] == max_score

@@ -49,7 +49,10 @@ def _report_helper(user):
         avg_duration += float(game_summary[3])
         avg_attempts += int(game_summary[4])
 
-    if num_variants != 0:
+    if num_variants == 0:
+        avg_duration = 999999
+        avg_attempts = 999999
+    else:
         # converts avg_duration to minutes
         avg_duration /= (num_variants * 60)
         avg_attempts /= num_variants
