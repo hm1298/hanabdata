@@ -5,8 +5,9 @@ we disable the function docstring check from pylint.
 """
 
 # pylint: disable=missing-function-docstring
-import json
 import csv
+import json
+import pathlib
 from os import path, listdir
 
 
@@ -111,6 +112,14 @@ def write_score_hunt_summary(data):
     # there is no risk of collision.
     write_score_hunt("(SUMMARY)", data)
 
+
+def get_users():
+    """Returns a list of usernames."""
+    user_list = []
+    users_folder = pathlib.Path("./data/raw/users")
+    for user_file in users_folder.glob("*.json"):
+        user_list.append(user_file.name[:-5])
+    return user_list
 
 def get_game_ids():
     games_path = './data/raw/games'

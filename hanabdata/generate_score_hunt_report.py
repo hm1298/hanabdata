@@ -2,18 +2,9 @@
 then creates a CSV report of each user's overall stats.
 """
 
-import pathlib
 from hanabdata.score_hunt import analyze_2P_score_hunt
-from hanabdata.tools.io.read import get_score_hunt, write_score_hunt_summary
-
-users_folder = pathlib.Path("./data/raw/users")
-
-def get_users():
-    """Returns a list of usernames."""
-    user_list = []
-    for user_file in users_folder.glob("*.json"):
-        user_list.append(user_file.name[:-5])
-    return user_list
+from hanabdata.tools.io.read import get_score_hunt, get_users, \
+    write_score_hunt_summary
 
 def generate_score_hunt_report():
     """Takes average for each user in score hunt. Creates CSV."""
