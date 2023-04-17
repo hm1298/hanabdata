@@ -1,4 +1,5 @@
 """Tools to check status of and update data. Generally used by scripts"""
+from datetime import datetime
 from . import fetch, read
 
 def update_user(username: str):
@@ -20,7 +21,6 @@ def update_user(username: str):
     print(f'Received data for {len(new_data)} new games')
     full_data = new_data + prior_data
     read.write_user(username, full_data)
-
 
     missing_ids = _find_missing_games(username)
     count = len(missing_ids)
@@ -44,10 +44,43 @@ def update_seed(seed: str):
         read.write_seed(seed, data)
 
 def update_game(game_id: int):
+    """Updates a specific game."""
     data = fetch.fetch_game(game_id)
     read.write_game_to_chunk(game_id, data)
 
+def update_chunk(chunk_number: int, exceptional_ids=None, exclude=True):
+    """Updates all games in a chunk."""
+    print(f"Updating games between {chunk_number * 1000} and",
+        f"{chunk_number * 1000 + 999}.")
+    current, num_updated = datetime.now(), 0
+    if exceptional_ids is None:
+        exceptional_ids = []
+
+    ids = []
+    for i in range(1000 * (chunk_number + 1), 1000 * chunk_number, -1):
+        game_id = i - 1
+        if exclude:
+            # inefficient
+            if game_id not in exceptional_ids:
+                ids.append(game_id)
+        else:
+            # inefficient
+            if game_id in exceptional_ids:
+                ids.append(game_id)
+
+    games_dict = read.read_games_from_chunk(ids, ids[-1] // 1000)
+    for game_id, game in games_dict.items():
+        if game is None:
+            games_dict[game_id] = fetch.fetch_game(game_id)
+            num_updated += 1
+        if (datetime.now() - current).total_seconds() > 20:
+            print(f"Fetched game with ID {game_id}, the {num_updated}th",
+                "update in this chunk since last print message.")
+            current, num_updated = datetime.now(), 0
+    read.write_games_to_chunk(games_dict, chunk_number)
+
 def port_games():
+    """Moves old game data format over to new."""
     game_ids = read.get_game_ids()
     total = len(game_ids)
     for i, game_id in enumerate(game_ids):
@@ -57,6 +90,7 @@ def port_games():
         read.write_game_to_chunk(game_id, data)
 
 def _find_missing_games(username: str):
+    """Iterates over chunks based on ids."""
     data = read.read_user(username)
     ids = sorted([row["id"] for row in data], reverse=True)
     missing_ids = []

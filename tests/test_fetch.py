@@ -1,6 +1,6 @@
 """Tests fetch."""
 
-import hanabdata.tools.io.fetch as fetch
+from hanabdata.tools.io import fetch
 
 HALTMARK = "https://hanab.live/api/v1/history-full/haltmark"
 LANVIN = "https://hanab.live/api/v1/history-full/Lanvin"
@@ -32,12 +32,12 @@ def test_fetch_user1():
 def test_fetch_user2():
     """Checks fetch user for a medium user."""
     num_games = len(fetch.fetch_user("sodiumdebt"))
-    assert num_games > 1400 and num_games < 1700
+    assert 1400 < num_games < 1700
 
 def test_fetch_user3():
     """Checks fetch user for a large user."""
     num_games = len(fetch.fetch_user("Lanvin"))
-    assert num_games > 21000 and num_games < 23000
+    assert 21000 < num_games < 23000
 
 def test_fetch_game():
     """Checks fetch game returns a nonempty dict."""
