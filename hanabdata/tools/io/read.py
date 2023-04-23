@@ -94,6 +94,19 @@ def read_games_from_chunk(games: list, chunk: int):
         games_dict[game_id] = data[game_id % 1000]
     return games_dict
 
+def write_games_to_chunk(games: dict, chunk: int):
+    # note file should exist if this function is called. checks anyway
+    chunk_path = _get_chunk_path(chunk)
+    if _file_exists(chunk_path):
+        data = read_chunk(chunk)
+    else:
+        data = [None] * 1000
+    for game_id in games:
+        _, i = divmod(game_id, 1000)
+        assert _ == chunk  # remove
+        data[i] = games[game_id]
+    _write_json(chunk_path, data)
+
 def write_user_summary(username: str, summary):
     filepath = _get_user_summary_path(username)
     _write_csv(filepath, summary)
@@ -208,7 +221,7 @@ def _write_json(file_path, txt):
 def _read_csv(file_path):
     with open(file_path, newline='', encoding='utf-8') as csvfile:
         csvreader = csv.reader(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        return [row for row in csvreader]
+        return list(csvreader)
 
 def _write_csv(file_path, data):
     with open(file_path, 'w', newline='', encoding='utf-8') as csvfile:

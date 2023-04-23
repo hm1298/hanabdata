@@ -6,7 +6,7 @@ and optional features for data that has been processed at different
 points in time.
 """
 
-import hanabdata.game.variants as variants
+from hanabdata.game import variants
 
 _NONCHEATING_OPTIONS = {"options": {
     "startingPlayer": 0,
@@ -18,7 +18,8 @@ _NONCHEATING_OPTIONS = {"options": {
     "detrimentalCharacters": False,
 }}
 
-def _equality_function(x, y): 
+def _equality_function(x, y):
+    """Equals.""" 
     return x == y
 
 

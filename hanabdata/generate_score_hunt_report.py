@@ -15,13 +15,15 @@ def generate_score_hunt_report():
         "avg attempts"
     ]]
     for user in users:
-        hunts.append(_report_helper(user))
+        hunts.append(_report_helper(user, new_report=False))
     write_score_hunt_summary(hunts)
 
-def _report_helper(user):
+def _report_helper(user, new_report=False):
     """Finds the averages """
     # makes sure data exists
     while True:
+        if new_report:
+            analyze_2P_score_hunt(user)
         data = get_score_hunt(user)
         if data is None:
             analyze_2P_score_hunt(user)
