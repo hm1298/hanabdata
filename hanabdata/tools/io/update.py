@@ -47,15 +47,6 @@ def update_game(game_id: int):
     data = fetch.fetch_game(game_id)
     read.write_game_to_chunk(game_id, data)
 
-def port_games():
-    game_ids = read.get_game_ids()
-    total = len(game_ids)
-    for i, game_id in enumerate(game_ids):
-        if i % 10 == 0:
-            print(f'now porting {game_id}: {i + 1} of {total}')
-        data = read.read_game(game_id)
-        read.write_game_to_chunk(game_id, data)
-
 def _find_missing_games(username: str):
     data = read.read_user(username)
     ids = sorted([row["id"] for row in data], reverse=True)
