@@ -80,7 +80,17 @@ def fetch_url(url, verbose=True):
     try:
         if verbose:
             print(f"Fetching from {url}")
-        return requests.get(url, timeout=MAX_TIME).json(), None
+        response = requests.get(url, timeout=MAX_TIME)
+        try:
+            data = response.json()
+        except ValueError as exc:
+            if response.text[:5] == "Error":
+                return "Error", None
+            print(f"ERROR: {url} failed to return a valid JSON object.")
+            print("Unexpected error message from site:\n")
+            print(response.text + "\n")
+            raise exc
+        return data, None
     except BaseException as e:
         print(f"Unable to complete request to {url}")
         return [], e
