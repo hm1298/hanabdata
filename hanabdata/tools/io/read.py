@@ -31,15 +31,6 @@ def write_user(username: str, data):
     user_path = _get_user_data_path(username)
     _write_json(user_path, data)
 
-def read_game(game_id: int):
-    game_path = _get_game_data_path(game_id)
-    data = _read_json(game_path)
-    return data
-
-def write_game(game_id: int, data):
-    game_path = _get_game_data_path(game_id)
-    _write_json(game_path, data)
-
 def read_seed(seed: str):
     seed_path = _get_seed_data_path(seed)
     data = _read_json(seed_path)
@@ -119,10 +110,6 @@ def write_winrate_seeds(variant: int, data):
     varaint_path = _get_variant_winrate_path(variant)
     _write_csv(varaint_path, data)
 
-def game_data_exists(game_id: int):
-    game_path = _get_game_data_path(game_id)
-    return _file_exists(game_path)
-
 def seed_data_exists(seed: str):
     seed_path = _get_seed_data_path(seed)
     return _file_exists(seed_path)
@@ -176,9 +163,6 @@ def _file_exists(filepath: str):
 
 def _get_user_data_path(username: str):
     return f'./data/raw/users/{username}.json'
-
-def _get_game_data_path(game_id: int):
-    return f'./data/raw/games/{game_id}.json'
 
 def _get_seed_data_path(seed: str):
     return f'./data/raw/seeds/{seed}.json'
