@@ -2,7 +2,7 @@
 from datetime import datetime
 from . import fetch, read
 
-def update_user(username: str):
+def update_user(username: str, download_games=True):
     """Downloads and stores user summary data, then detects, downloads, and stores data from any 
     games user played not already downloaded."""
 
@@ -18,21 +18,25 @@ def update_user(username: str):
 
     print(f'Requesting {username}\'s data starting from {start}' )
     new_data = fetch.fetch_user(username, start)
+    if new_data == "Error":
+        print("An error has occurred. User may have deleted their account.")
+        return
     print(f'Received data for {len(new_data)} new games')
     full_data = new_data + prior_data
     read.write_user(username, full_data)
 
-    missing_ids = _find_missing_games(username)
-    count = len(missing_ids)
-    print(f'{count} of {username}\'s games missing game data')
-    print(f'Requesting data for {count} games...')
+    if download_games:
+        missing_ids = _find_missing_games(username)
+        count = len(missing_ids)
+        print(f'{count} of {username}\'s games missing game data')
+        print(f'Requesting data for {count} games...')
 
-    for i, game_id in enumerate(missing_ids):
-        if i % 10 == 0:
-            print(f'Completed {i} of {count}')
-        update_game(game_id)
+        for i, game_id in enumerate(missing_ids):
+            if i % 10 == 0:
+                print(f'Completed {i} of {count}')
+            update_game(game_id)
 
-    print(f'Successfully updated all game data for {username}.')
+        print(f'Successfully updated all game data for {username}.')
 
 def update_seed(seed: str):
     """Downloads and stores seed summary data"""
