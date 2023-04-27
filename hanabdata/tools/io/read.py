@@ -8,7 +8,7 @@ we disable the function docstring check from pylint.
 import csv
 import json
 import pathlib
-from os import path, listdir
+from os import path
 
 
 def write(tag, data, data_type = 'user', processing_level = 'raw'):

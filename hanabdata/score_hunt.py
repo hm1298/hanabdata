@@ -8,7 +8,7 @@ from hanabdata.tools.restriction import STANDARD_2P, has_winning_score
 from hanabdata.tools.io.read import read_user, write_score_hunt
 
 
-def analyze_2P_score_hunt(username: str):
+def analyze_2P_score_hunt(username: str, restriction=STANDARD_2P):
     """A function that creates the CSV in the original for loop."""
 
     data = read_user(username)
@@ -19,7 +19,7 @@ def analyze_2P_score_hunt(username: str):
     score_hunt = {}
     # we cycle through in forwards chronological order
     for game in reversed(data):
-        if not STANDARD_2P.validate(game):
+        if not restriction.validate(game):
             # note: the standard restriction throws out games with less
             # than 3 turns. this may boost some player's numbers to an
             # unfair extent, depending on scorehunting strategy
