@@ -88,15 +88,6 @@ def update_chunk(chunk_number: int, exceptional_ids=None, exclude=True, end_on_e
             current, num_updated = datetime.now(), 0
     read.write_games_to_chunk(games_dict, chunk_number)
 
-def port_games():
-    """Moves old game data format over to new."""
-    game_ids = read.get_game_ids()
-    total = len(game_ids)
-    for i, game_id in enumerate(game_ids):
-        if i % 10 == 0:
-            print(f'now porting {game_id}: {i + 1} of {total}')
-        data = read.read_game(game_id)
-        read.write_game_to_chunk(game_id, data)
 
 def _find_missing_games(username: str):
     """Iterates over chunks based on ids."""
