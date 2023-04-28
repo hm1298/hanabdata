@@ -6,7 +6,7 @@ data/processed/score_hunts.
 import datetime
 from hanabdata.tools.analysis import Analysis
 from hanabdata.tools.restriction import STANDARD_2P, has_winning_score
-from hanabdata.tools.io.read import read_user, write_score_hunt, _read_csv
+from hanabdata.tools.io.read import read_user, write_score_hunt  #, _read_csv
 
 
 def analyze_2P_score_hunt(username: str, restriction=STANDARD_2P):
@@ -61,6 +61,7 @@ class ScoreHunt(Analysis):
         self.cleanup()
         self.update_file(self.table)
         assert next(self.data, None) is None
+        return self.table
 
     def cleanup(self):
         """Changes "won" column in table to True or False values."""

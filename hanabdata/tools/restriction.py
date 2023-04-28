@@ -97,8 +97,8 @@ class Restriction:
         self.add_special_case(option, greater_than)
 
     def add_contains(self, option):
-        """Common function "contains" gets its own method."""
-        def contains(x, y): return x.contains(y)
+        """Common function "in" gets its own method."""
+        def contains(x, y): return y in x
         self.add_special_case(option, contains)
 
     def add_filter(self, key, value, necessary=True):
