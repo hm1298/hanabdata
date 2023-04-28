@@ -52,7 +52,7 @@ def update_game(game_id: int):
     data = fetch.fetch_game(game_id)
     read.write_game_to_chunk(game_id, data)
 
-def update_chunk(chunk_number: int, exceptional_ids=None, exclude=True):
+def update_chunk(chunk_number: int, exceptional_ids=None, exclude=True, end_on_error=False):
     """Updates all games in a chunk."""
     print(f"Updating games between {chunk_number * 1000} and",
         f"{chunk_number * 1000 + 999}.")
@@ -75,7 +75,12 @@ def update_chunk(chunk_number: int, exceptional_ids=None, exclude=True):
     games_dict = read.read_games_from_chunk(ids, ids[-1] // 1000)
     for game_id, game in games_dict.items():
         if game is None:
-            games_dict[game_id] = fetch.fetch_game(game_id)
+            response = fetch.fetch_game(game_id)
+            if end_on_error and response == "Error":
+                read.write_games_to_chunk(games_dict, chunk_number)
+                print(f"Stopped downloading after nonexistent game {game_id}.")
+                return "Please stop"
+            games_dict[game_id] = response
             num_updated += 1
         if (datetime.now() - current).total_seconds() > 20:
             print(f"Fetched game with ID {game_id}, the {num_updated}th",

@@ -44,9 +44,10 @@ def get_player_and_seed_info():
     read._write_json("./data/player_dict.json", player_dict)
     read._write_json("./data/seed_dict.json", seed_dict)
 
-def analyze_player_info():
+def analyze_info(info_type):
     """Analyzes existing player info."""
-    data = read._read_json("./data/player_dict.json")
+    assert info_type in ("player", "seed")
+    data = read._read_json(f"./data/{info_type}_dict.json")
 
     # laughing emoji
     exactly_one, two_to_nine, ten_to_forty_nine, fifty_to_ninety_nine, hundred_to_nine_nine_nine, thousand_plus = 0, 0, 0, 0, 0, 0
@@ -66,12 +67,12 @@ def analyze_player_info():
         else:
             assert num_games >= 1000
             thousand_plus += 1
-    print(f"There are {exactly_one} players with one game played.")
-    print(f"There are {two_to_nine} players with 2 to 9 completed games.")
-    print(f"There are {ten_to_forty_nine} players with 10 to 49 completed games.")
-    print(f"There are {fifty_to_ninety_nine} players with 50 to 99 completed games.")
-    print(f"There are {hundred_to_nine_nine_nine} players with 100 to 999 completed games.")
-    print(f"There are {thousand_plus} players with 1000+ completed games.")
+    print(f"There are {exactly_one} {info_type}s with one game played.")
+    print(f"There are {two_to_nine} {info_type}s with 2 to 9 completed games.")
+    print(f"There are {ten_to_forty_nine} {info_type}s with 10 to 49 completed games.")
+    print(f"There are {fifty_to_ninety_nine} {info_type}s with 50 to 99 completed games.")
+    print(f"There are {hundred_to_nine_nine_nine} {info_type}s with 100 to 999 completed games.")
+    print(f"There are {thousand_plus} {info_type}s with 1000+ completed games.")
 
 def update_players(req_num_games: int):
     """Updates all players with at least req_num_games completed."""
@@ -82,5 +83,5 @@ def update_players(req_num_games: int):
 
 if __name__ == '__main__':
     # get_player_and_seed_info()
-    analyze_player_info()
-    update_players(100)
+    analyze_info("player")
+    analyze_info("seed")
