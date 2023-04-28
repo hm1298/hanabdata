@@ -36,6 +36,11 @@ class Analysis:
         """Setter method for self.interpret."""
         self.interpret = func
 
+    def update_file(self, data):
+        """Updates file if needed."""
+        if self.write:
+            read._write_csv(self.file, data)
+
     # these next two methods are rough and probably should be removed
     # until needed. not sure what all this class should do yet
     def make_interpret_use_restrictions(self):
@@ -90,7 +95,20 @@ class Analysis:
     def analyze(self):
         """Runs the analysis. Depletes self.data."""
         result = self.interpret(self.data, self.filter, self.goal)
-        if self.write:
-            read._write_csv(self.file, result)
+        self.update_file(result)
         assert next(self.data, None) is None
         return result
+
+# def score_hunt_analysis():
+#     """Model function."""
+#     get_data()  # should data instead be passed into function? maybe yes
+
+#     initialize_table()  # column headers, maybe call label_columns()?
+#     while True:  # iterate through data
+#         filter_out_bad_entries()  # will be done with restriction
+#         info = get_info_from_entry()
+
+#         success = goal_condition()
+#         if check_row(info):
+#             initialize_row()
+#         update_table(info, success)
