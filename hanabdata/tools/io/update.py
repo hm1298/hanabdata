@@ -2,7 +2,7 @@
 from datetime import datetime
 from . import fetch, read
 
-def update_user(username: str):
+def update_user(username: str, download_games=True):
     """Downloads and stores user summary data, then detects, downloads, and stores data from any 
     games user played not already downloaded."""
 
@@ -18,21 +18,25 @@ def update_user(username: str):
 
     print(f'Requesting {username}\'s data starting from {start}' )
     new_data = fetch.fetch_user(username, start)
+    if new_data == "Error":
+        print("An error has occurred. User may have deleted their account.")
+        return
     print(f'Received data for {len(new_data)} new games')
     full_data = new_data + prior_data
     read.write_user(username, full_data)
 
-    missing_ids = _find_missing_games(username)
-    count = len(missing_ids)
-    print(f'{count} of {username}\'s games missing game data')
-    print(f'Requesting data for {count} games...')
+    if download_games:
+        missing_ids = _find_missing_games(username)
+        count = len(missing_ids)
+        print(f'{count} of {username}\'s games missing game data')
+        print(f'Requesting data for {count} games...')
 
-    for i, game_id in enumerate(missing_ids):
-        if i % 10 == 0:
-            print(f'Completed {i} of {count}')
-        update_game(game_id)
+        for i, game_id in enumerate(missing_ids):
+            if i % 10 == 0:
+                print(f'Completed {i} of {count}')
+            update_game(game_id)
 
-    print(f'Successfully updated all game data for {username}.')
+        print(f'Successfully updated all game data for {username}.')
 
 def update_seed(seed: str):
     """Downloads and stores seed summary data"""
@@ -48,7 +52,7 @@ def update_game(game_id: int):
     data = fetch.fetch_game(game_id)
     read.write_game_to_chunk(game_id, data)
 
-def update_chunk(chunk_number: int, exceptional_ids=None, exclude=True):
+def update_chunk(chunk_number: int, exceptional_ids=None, exclude=True, end_on_error=False):
     """Updates all games in a chunk."""
     print(f"Updating games between {chunk_number * 1000} and",
         f"{chunk_number * 1000 + 999}.")
@@ -71,7 +75,12 @@ def update_chunk(chunk_number: int, exceptional_ids=None, exclude=True):
     games_dict = read.read_games_from_chunk(ids, ids[-1] // 1000)
     for game_id, game in games_dict.items():
         if game is None:
-            games_dict[game_id] = fetch.fetch_game(game_id)
+            response = fetch.fetch_game(game_id)
+            if end_on_error and response == "Error":
+                read.write_games_to_chunk(games_dict, chunk_number)
+                print(f"Stopped downloading after nonexistent game {game_id}.")
+                return "Please stop"
+            games_dict[game_id] = response
             num_updated += 1
         if (datetime.now() - current).total_seconds() > 20:
             print(f"Fetched game with ID {game_id}, the {num_updated}th",

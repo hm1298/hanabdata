@@ -8,7 +8,7 @@ we disable the function docstring check from pylint.
 import csv
 import json
 import pathlib
-from os import path, listdir
+from os import path
 
 
 def write(tag, data, data_type = 'user', processing_level = 'raw'):
@@ -75,7 +75,10 @@ def read_games_from_chunk(games: list, chunk: int):
         values - game data for matching ID from file (could be None)
     """
     if _file_exists(_get_chunk_path(chunk)):
-        data = read_chunk(chunk)
+        try:
+            data = read_chunk(chunk)
+        except ValueError:
+            data = [None] * 1000
     else:
         data = [None] * 1000
     games_dict = {}
@@ -89,7 +92,10 @@ def write_games_to_chunk(games: dict, chunk: int):
     # note file should exist if this function is called. checks anyway
     chunk_path = _get_chunk_path(chunk)
     if _file_exists(chunk_path):
-        data = read_chunk(chunk)
+        try:
+            data = read_chunk(chunk)
+        except ValueError:
+            data = [None] * 1000
     else:
         data = [None] * 1000
     for game_id in games:
@@ -133,23 +139,21 @@ def write_score_hunt_summary(data):
     write_score_hunt("(SUMMARY)", data)
 
 
+def get_file_names(path: str):
+    """Returns a list of JSON files in the given directory."""
+    file_list = []
+    folder = pathlib.Path(path)
+    for file in folder.glob("*.json"):
+        file_list.append(file.name[:-5])
+    return file_list
+
 def get_users():
     """Returns a list of usernames."""
-    user_list = []
-    users_folder = pathlib.Path("./data/raw/users")
-    for user_file in users_folder.glob("*.json"):
-        user_list.append(user_file.name[:-5])
-    return user_list
+    return get_file_names("./data/raw/users")
 
 def get_game_ids():
-    games_path = './data/raw/games'
-    file_names = listdir(games_path)
-    game_ids = []
-    for file_name in file_names:
-        if file_name == '.gitkeep':
-            continue
-        game_ids.append(int(file_name[0:-5]))
-    return game_ids
+    """Returns a list of game IDs from the old format."""
+    return get_file_names("./data/raw/games")
 
 def get_score_hunt(username: str):
     hunt_path = f'./data/processed/score_hunts/{username}.csv'

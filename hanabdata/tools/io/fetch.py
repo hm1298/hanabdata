@@ -113,6 +113,8 @@ def find_given_game(url: str, given: int):
     page_num, page_index = divmod(given - 1, ROWS)
     safe_url = url.replace("-full", "") + f'?size={ROWS}&page={page_num}'
     response = _fetch_url_or_error(safe_url)
+    if response == "Error":
+        return 0
     game_list = response["rows"]
     if game_list is None or len(game_list) <= page_index:
         return 0

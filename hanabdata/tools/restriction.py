@@ -88,13 +88,25 @@ class Restriction:
 
     def add_less_than(self, option):
         """Common function "<" gets its own method."""
-        def func(x, y): return x < y
-        self.add_special_case(option, func)
+        def less_than(x, y): return x < y
+        self.add_special_case(option, less_than)
 
     def add_greater_than(self, option):
         """Common function ">" gets its own method."""
-        def func(x, y): return x > y
-        self.add_special_case(option, func)
+        def greater_than(x, y): return x > y
+        self.add_special_case(option, greater_than)
+
+    def add_contains(self, option):
+        """Common function "in" gets its own method."""
+        def contains(x, y): return y in x
+        self.add_special_case(option, contains)
+
+    def add_filter(self, key, value, necessary=True):
+        """Adds a constraint."""
+        if necessary:
+            self.necessary_constraints[key] = value
+        else:
+            self.optional_constraints[key] = value
 
     def validate(self, data):
         """This function is the purpose of the entire class.
