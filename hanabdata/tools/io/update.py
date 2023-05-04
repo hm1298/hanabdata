@@ -88,7 +88,6 @@ def update_chunk(chunk_number: int, exceptional_ids=None, exclude=True, end_on_e
             current, num_updated = datetime.now(), 0
     read.write_games_to_chunk(games_dict, chunk_number)
 
-
 def _find_missing_games(username: str):
     """Iterates over chunks based on ids."""
     data = read.read_user(username)
