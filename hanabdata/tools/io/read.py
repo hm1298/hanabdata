@@ -21,6 +21,50 @@ def write(tag, data, data_type = 'user', processing_level = 'raw'):
         _write_csv(file_path, data)
 
 
+class GamesIterator:
+    """Iterates over all games metadata"""
+    def __init__(self, oldest_to_newest=True):
+        dir_path = _get_chunk_meta_path(0)[:-6]
+        files = [int(y) for y in get_file_names(dir_path)]
+        if oldest_to_newest:
+            self.chunk_list = sorted(files, reverse=True)
+        else:
+            self.chunk_list = sorted(files)
+
+    def set_current(self):
+        """Opens the next file and reads as JSON."""
+        self.curr_chunk = chunk_num = self.chunk_list.pop()
+        self.current = read_chunk(chunk_num, meta=True)
+        self.index = 0
+
+    def is_valid(self, game):
+        """Retruns True if a game is valid; False otherwise."""
+        try:
+            game["id"]
+        except TypeError:
+            return False
+        except KeyError:
+            print(f"Possible issue with JSON storage in chunk {self.curr_chunk}.")
+            return False
+        return True
+
+    def __iter__(self):
+        self.set_current()
+        return self
+
+    def __next__(self):
+        if self.index < 1000:
+            game = self.current[self.index]
+            self.index += 1
+            if self.is_valid(game):
+                return game
+            return next(self)
+        try:
+            self.set_current()
+            return next(self)
+        except IndexError as e:
+            raise StopIteration from e
+
 
 def read_user(username: str):
     user_path = _get_user_data_path(username)
@@ -40,32 +84,41 @@ def write_seed(seed: str, data):
     seed_path = _get_seed_data_path(seed)
     _write_json(seed_path, data)
 
-def read_chunk(chunk: int):
-    chunk_path = _get_chunk_path(chunk)
+def read_chunk(chunk: int, meta=False):
+    if meta:
+        chunk_path = _get_chunk_meta_path(chunk)
+    else:
+        chunk_path = _get_chunk_path(chunk)
     data = _read_json(chunk_path)
     return data
 
-def write_game_to_chunk(game_id: int, data):
+def write_game_to_chunk(game_id: int, data, meta=False):
     chunk = game_id // 1000
     i = game_id % 1000
-    chunk_path = _get_chunk_path(chunk)
+    if meta:
+        chunk_path = _get_chunk_meta_path(chunk)
+    else:
+        chunk_path = _get_chunk_path(chunk)
     if not _file_exists(chunk_path):
         data_to_update = [None] * 1000
     else:
-        data_to_update = read_chunk(chunk)
+        data_to_update = read_chunk(chunk, meta)
     data_to_update[i] = data
     _write_json(chunk_path, data_to_update)
 
-def read_game_from_chunk(game_id: int):
+def read_game_from_chunk(game_id: int, meta=False):
     chunk = game_id // 1000
     i = game_id % 1000
-    chunk_path = _get_chunk_path(chunk)
+    if meta:
+        chunk_path = _get_chunk_meta_path(chunk)
+    else:
+        chunk_path = _get_chunk_path(chunk)
     if not _file_exists(chunk_path):
         return None
-    data = read_chunk(chunk)
+    data = read_chunk(chunk, meta)
     return data[i]
 
-def read_games_from_chunk(games: list, chunk: int):
+def read_games_from_chunk(games: list, chunk: int, meta=False):
     """Assumes games is sorted reverse chronologically.
 
     Also assumes all entries are >= the least ID in chunk.
@@ -74,9 +127,13 @@ def read_games_from_chunk(games: list, chunk: int):
         keys - IDs from games, inserted in increasing order
         values - game data for matching ID from file (could be None)
     """
-    if _file_exists(_get_chunk_path(chunk)):
+    if meta:
+        chunk_path = _get_chunk_meta_path(chunk)
+    else:
+        chunk_path = _get_chunk_path(chunk)
+    if _file_exists(chunk_path):
         try:
-            data = read_chunk(chunk)
+            data = read_chunk(chunk, meta)
         except ValueError:
             data = [None] * 1000
     else:
@@ -88,12 +145,15 @@ def read_games_from_chunk(games: list, chunk: int):
         games_dict[game_id] = data[game_id % 1000]
     return games_dict
 
-def write_games_to_chunk(games: dict, chunk: int):
+def write_games_to_chunk(games: dict, chunk: int, meta=False):
     # note file should exist if this function is called. checks anyway
-    chunk_path = _get_chunk_path(chunk)
+    if meta:
+        chunk_path = _get_chunk_meta_path(chunk)
+    else:
+        chunk_path = _get_chunk_path(chunk)
     if _file_exists(chunk_path):
         try:
-            data = read_chunk(chunk)
+            data = read_chunk(chunk, meta)
         except ValueError:
             data = [None] * 1000
     else:
@@ -113,8 +173,12 @@ def write_seed_summary(seed: str, summary):
     _write_csv(filepath, summary)
 
 def write_winrate_seeds(variant: int, data):
-    varaint_path = _get_variant_winrate_path(variant)
-    _write_csv(varaint_path, data)
+    variant_path = _get_variant_winrate_path(variant)
+    _write_csv(variant_path, data)
+
+def write_ratings(type_of_entries, data):
+    file_path = f"data/processed/ratings/{type_of_entries}.csv"
+    _write_csv(file_path, data)
 
 def seed_data_exists(seed: str):
     seed_path = _get_seed_data_path(seed)
@@ -172,6 +236,9 @@ def _get_seed_data_path(seed: str):
     return f'./data/raw/seeds/{seed}.json'
 
 def _get_chunk_path(chunk: int):
+    return f'./data/raw/games/{chunk}.json'
+
+def _get_chunk_meta_path(chunk: int):
     return f'./data/preprocessed/games/{chunk}.json'
 
 def _get_user_summary_path(username: str):

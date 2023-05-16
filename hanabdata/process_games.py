@@ -9,7 +9,7 @@ def get_player_and_seed_info():
     current = datetime.now()
     player_dict = {}
     seed_dict = {}
-    chunk_list = sorted([int(y) for y in read.get_file_names("./data/preprocessed/games")])
+    chunk_list = sorted([int(y) for y in read.get_file_names("./data/raw/games")])
     for chunk in chunk_list:
         try:
             data = read.read_chunk(chunk)
@@ -74,14 +74,29 @@ def analyze_info(info_type):
     print(f"There are {hundred_to_nine_nine_nine} {info_type}s with 100 to 999 completed games.")
     print(f"There are {thousand_plus} {info_type}s with 1000+ completed games.")
 
-def update_players(req_num_games: int):
-    """Updates all players with at least req_num_games completed."""
+def get_players_with_x_games(req_num_games: int):
+    """Returns a dict from player_dict.json with num games filter."""
     data = read._read_json("./data/player_dict.json")
+    result = {}
     for player in data:
         if data[player]["num_games"] >= req_num_games:
-            update_user(player, False)
+            result[player] = data[player]
+    return result
+
+def update_players(req_num_games: int):
+    """Updates all players with at least req_num_games completed."""
+    data = get_players_with_x_games(req_num_games)
+    num_updates = 0
+    current = datetime.now()
+    for player in data:
+        if (datetime.now() - current).total_seconds() > 20:
+            print(f"Updated metagame data for {num_updates} players.")
+            current = datetime.now()
+        update_user(player)
+        num_updates += 1
 
 if __name__ == '__main__':
     # get_player_and_seed_info()
     analyze_info("player")
     analyze_info("seed")
+    update_players(100)

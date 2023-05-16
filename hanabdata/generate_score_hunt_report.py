@@ -63,14 +63,14 @@ def score_hunt_for_teams():
         teammates = {}
         for game in data:
             for player in game["playerNames"]:
-                if player == user:
+                if player == user or game["options"]["numPlayers"] != 2:
                     continue
                 if player not in teammates:
                     teammates[player] = 1
                 else:
                     teammates[player] += 1
         for player, num_games in teammates.items():
-            if num_games >= 100:
+            if num_games >= 17:
                 teams.add(alphabetize(user, player))
 
     hunts = [["team",
