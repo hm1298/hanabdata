@@ -9,7 +9,7 @@ def get_player_and_seed_info():
     current = datetime.now()
     player_dict = {}
     seed_dict = {}
-    chunk_list = sorted([int(y) for y in read.get_file_names("./data/preprocessed/games")])
+    chunk_list = sorted([int(y) for y in read.get_file_names("./data/raw/games")])
     for chunk in chunk_list:
         try:
             data = read.read_chunk(chunk)

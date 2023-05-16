@@ -15,13 +15,13 @@ def download_all(game_id: int, stop=False):
 
 def download_new():
     """Downloads all games newer than the newest game saved to file."""
-    chunks = [int(f) for f in get_file_names("./data/preprocessed/games")]
+    chunks = [int(f) for f in get_file_names("./data/raw/games")]
     last_game_id = 1000 * max(chunks)
     download_all(last_game_id, True)
 
 def get_last_game():
     """Returns last downloaded game in chunk."""
-    chunk_path = "./data/preprocessed/games"
+    chunk_path = "./data/raw/games"
     chunk_num = max(int(f) for f in get_file_names(chunk_path))
     chunk_data = read_chunk(chunk_num)
     max_game_id = 0

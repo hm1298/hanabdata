@@ -25,6 +25,8 @@ def update_user(username: str, download_games=True):
     full_data = new_data + prior_data
     read.write_user(username, full_data)
 
+    update_metagames(username)
+
     if download_games:
         missing_ids = _find_missing_games(username)
         count = len(missing_ids)
@@ -88,13 +90,41 @@ def update_chunk(chunk_number: int, exceptional_ids=None, exclude=True, end_on_e
             current, num_updated = datetime.now(), 0
     read.write_games_to_chunk(games_dict, chunk_number)
 
-def _find_missing_games(username: str):
+def update_metagames(username: str):
+    """Iterates over chunks based on ids."""
+    try:
+        data = read.read_user(username)
+    except FileNotFoundError:
+        data = fetch.fetch_user(username)
+        if data == "Error":
+            return
+        read.write_user(username, data)
+    id_lookup = {}
+    for game in data:
+        id_lookup[game["id"]] = game
+
+    ids = _find_missing_games(username, True)
+    try:
+        chunk, buffer = ids[0] // 1000, {}
+    except IndexError:
+        return
+
+    for game_id in ids:
+        curr_chunk = game_id // 1000
+        if chunk != curr_chunk:
+            read.write_games_to_chunk(buffer, chunk, True)
+            chunk, buffer = curr_chunk, {}
+        buffer[game_id] = id_lookup[game_id]
+
+# TODO: Change some of these to work on dicts rather than usernames.
+
+def _find_missing_games(username: str, meta=False):
     """Iterates over chunks based on ids."""
     data = read.read_user(username)
     ids = sorted([row["id"] for row in data], reverse=True)
     missing_ids = []
     while ids:
-        games_dict = read.read_games_from_chunk(ids, ids[-1] // 1000)
+        games_dict = read.read_games_from_chunk(ids, ids[-1] // 1000, meta)
         for game_id, game in games_dict.items():
             if game is None:
                 missing_ids.append(game_id)
