@@ -21,11 +21,11 @@ def test_game_storage_spots():
         supposed_id = chunk * 1000 + i
         real_id = game["id"]
         assert supposed_id == real_id
-    
+
 def test_game_retrieval():
     """tests that asking for a game's data gives data for that game"""
     for game_id in range(776800, 777200):
         game = read.read_game_from_chunk(game_id)
-        if game is None:
+        if game is None or game == "Error":
             continue
         assert game_id == game["id"]

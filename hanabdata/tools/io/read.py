@@ -21,6 +21,47 @@ def write(tag, data, data_type = 'user', processing_level = 'raw'):
         _write_csv(file_path, data)
 
 
+class GamesIterator:
+    """Iterates over all games metadata"""
+    def __init__(self):
+        dir_path = _get_chunk_meta_path(0)[:-6]
+        files = [int(y) for y in get_file_names(dir_path)]
+        self.chunk_list = sorted(files, reverse=True)
+
+    def set_current(self):
+        """Opens the next file and reads as JSON."""
+        self.curr_chunk = chunk_num = self.chunk_list.pop()
+        self.current = read_chunk(chunk_num, meta=True)
+        self.index = 0
+
+    def is_valid(self, game):
+        """Retruns True if a game is valid; False otherwise."""
+        try:
+            game["id"]
+        except TypeError:
+            return False
+        except KeyError:
+            print(f"Possible issue with JSON storage in chunk {self.curr_chunk}.")
+            return False
+        return True
+
+    def __iter__(self):
+        self.set_current()
+        return self
+
+    def __next__(self):
+        if self.index < 1000:
+            game = self.current[self.index]
+            self.index += 1
+            if self.is_valid(game):
+                return game
+            return next(self)
+        try:
+            self.set_current()
+            return next(self)
+        except IndexError as e:
+            raise StopIteration from e
+
 
 def read_user(username: str):
     user_path = _get_user_data_path(username)
@@ -129,8 +170,12 @@ def write_seed_summary(seed: str, summary):
     _write_csv(filepath, summary)
 
 def write_winrate_seeds(variant: int, data):
-    varaint_path = _get_variant_winrate_path(variant)
-    _write_csv(varaint_path, data)
+    variant_path = _get_variant_winrate_path(variant)
+    _write_csv(variant_path, data)
+
+def write_ratings(type_of_entries, data):
+    file_path = f"data/processed/ratings/{type_of_entries}.csv"
+    _write_csv(file_path, data)
 
 def seed_data_exists(seed: str):
     seed_path = _get_seed_data_path(seed)
