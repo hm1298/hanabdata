@@ -95,10 +95,11 @@ def update_metagames(username: str):
     try:
         data = read.read_user(username)
     except FileNotFoundError:
-        data = fetch.fetch_user(username)
-        if data == "Error":
-            return
-        read.write_user(username, data)
+        # data = fetch.fetch_user(username)
+        # if data == "Error":
+        #     return
+        # read.write_user(username, data)
+        return
     id_lookup = {}
     for game in data:
         id_lookup[game["id"]] = game
