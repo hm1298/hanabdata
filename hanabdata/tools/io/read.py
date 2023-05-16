@@ -23,10 +23,13 @@ def write(tag, data, data_type = 'user', processing_level = 'raw'):
 
 class GamesIterator:
     """Iterates over all games metadata"""
-    def __init__(self):
+    def __init__(self, oldest_to_newest=True):
         dir_path = _get_chunk_meta_path(0)[:-6]
         files = [int(y) for y in get_file_names(dir_path)]
-        self.chunk_list = sorted(files, reverse=True)
+        if oldest_to_newest:
+            self.chunk_list = sorted(files, reverse=True)
+        else:
+            self.chunk_list = sorted(files)
 
     def set_current(self):
         """Opens the next file and reads as JSON."""
