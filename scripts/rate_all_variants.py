@@ -4,9 +4,11 @@ from datetime import datetime
 from hanabdata.process_games import get_players_with_x_games
 from hanabdata.tools.rating import Leaderboard
 from hanabdata.tools.io.read import GamesIterator, write_ratings
-from hanabdata.tools.restriction import STANDARD_GAME_RESTRICTION, has_winning_score
+from hanabdata.tools.restriction import get_standard_restrictions, has_winning_score
 
-def get_ratings(restriction=STANDARD_GAME_RESTRICTION):
+NUM_PLAYERS = 2
+
+def get_ratings(restriction=get_standard_restrictions(NUM_PLAYERS)):
     """Implements this module."""
     lb = Leaderboard(draw_probability=0.0)
     gi = GamesIterator(oldest_to_newest=True)
@@ -48,8 +50,8 @@ def get_ratings(restriction=STANDARD_GAME_RESTRICTION):
     print(f"Total winrate is {total_wins / valid_games}.")
 
     # TODO: Neaten up output into something actually usable.
-    write_ratings("users", lb.get_users())
-    write_ratings("variants", lb.get_variants())
+    write_ratings(f"users_{NUM_PLAYERS}p", lb.get_users())
+    write_ratings(f"variants_{NUM_PLAYERS}p", lb.get_variants())
     # return lb.get_variants(), lb.get_users()
 
 def print_ratings():

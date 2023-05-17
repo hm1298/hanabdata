@@ -78,17 +78,17 @@ class Leaderboard(trueskill.TrueSkill):
         if mu is None:
             mu = self.mu
         if sigma is None:
-            sigma = self.sigma
+            sigma = mu / 3
         if is_variant:
-            new_var = trueskill.Rating(50.0, 2*sigma)
+            new_var = trueskill.Rating(mu, sigma)
             return new_var
-        new_user = trueskill.Rating(mu, 2*sigma)
+        new_user = trueskill.Rating(mu, sigma)
         return new_user
 
     def update_and_rate(self, variant, player_list, won, update_var=True):
         """Updates and rates based on variant and player names."""
         rating_groups = [
-            (self.variants.setdefault(variant, self.create_rating(name=variant, is_variant=True)),),
+            (self.variants.setdefault(variant, self.create_rating(mu=65.22,name=variant, is_variant=True)),),
             tuple(self.users.setdefault(player, self.create_rating(name=player)) for player in player_list)
         ]
 

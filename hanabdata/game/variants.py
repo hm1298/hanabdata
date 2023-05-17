@@ -51,6 +51,19 @@ def get_variant_dict():
         update_variants()
         return get_variant_dict()
 
+def get_variant_names_dict():
+    """Returns list of Variant objects."""
+    try:
+        with open(VARIANT_PATH, encoding="utf8") as json_file:
+            json_list = json.load(json_file)
+        variant_dict = {}
+        for variant_data in json_list:
+            variant_dict[variant_data["name"]] = Variant(**variant_data)
+        return variant_dict
+    except FileNotFoundError:
+        update_variants()
+        return get_variant_names_dict()
+
 def find_variant(variant_id):
     """Returns Variant object with given variant_id."""
 
@@ -63,4 +76,17 @@ def find_variant(variant_id):
 
     return correct_variant
 
+def find_variant_from_name(variant_name):
+    """Returns Variant object with given variant_name."""
+
+    if variant_name in VARIANT_NAMES_DICT:
+        correct_variant = VARIANT_NAMES_DICT[variant_name]
+    else:
+        update_variants()
+        # throws an Error if variant_name does not exist
+        return VARIANT_NAMES_DICT[variant_name]
+
+    return correct_variant
+
 VARIANT_DICT = get_variant_dict()
+VARIANT_NAMES_DICT = get_variant_names_dict()
