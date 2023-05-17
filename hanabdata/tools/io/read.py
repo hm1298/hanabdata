@@ -53,17 +53,18 @@ class GamesIterator:
         return self
 
     def __next__(self):
-        if self.index < 1000:
+        while True:
+            if self.index == 1000:
+                try:
+                    self.set_current()
+                except IndexError as e:
+                    raise StopIteration from e
             game = self.current[self.index]
             self.index += 1
             if self.is_valid(game):
                 return game
-            return next(self)
-        try:
-            self.set_current()
-            return next(self)
-        except IndexError as e:
-            raise StopIteration from e
+            
+
 
 
 def read_user(username: str):
