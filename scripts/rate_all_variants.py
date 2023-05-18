@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from hanabdata.process_games import get_players_with_x_games
-from hanabdata.tools.rating import Leaderboard, get_average_of_column
+from hanabdata.tools.rating import LBSoloEnvironment, get_average_of_column
 from hanabdata.tools.io.read import GamesIterator, write_ratings
 from hanabdata.tools.restriction import get_standard_restrictions, has_winning_score
 
@@ -10,7 +10,7 @@ NUM_PLAYERS = 2
 
 def get_ratings(avg=73.6, restriction=get_standard_restrictions()):
     """Implements this module."""
-    lb = Leaderboard(draw_probability=0.0)
+    lb = LBSoloEnvironment(draw_probability=0.0)
     lb.set_variant_rating(avg, modify_beta=True)
     gi = GamesIterator(oldest_to_newest=True)
 
@@ -21,8 +21,8 @@ def get_ratings(avg=73.6, restriction=get_standard_restrictions()):
     for i, game in enumerate(gi):
         if not restriction.validate(game):
             continue
-        # if game["options"]["numPlayers"] == 2:
-        #     continue
+        if game["options"]["numPlayers"] == 2:
+            continue
         v = (game["options"]["variantName"], game["options"]["numPlayers"])
         players = game["playerNames"]
         # valid_games += 1
@@ -36,6 +36,8 @@ def get_ratings(avg=73.6, restriction=get_standard_restrictions()):
 
         if not good:
             continue
+
+        print("currently on:", v, players)
 
         if has_winning_score(game):
             # total_wins += 1
@@ -63,7 +65,7 @@ def print_ratings():
 
 def find_appropriate_defaults(step_weight=1.99, margin_of_error=0.1):
     """Searches for an appropriate default lb.variant_mu value."""
-    current_error, mu = 100.0, 25.0
+    current_error, mu = 100.0, 30.0
     while True:
         variant_table, _ = get_ratings(avg=mu)
         current_avg = get_average_of_column(variant_table, 3)

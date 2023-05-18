@@ -1,42 +1,25 @@
 """Uses TrueSkill to assign ratings to users and variants."""
 
-from math import sqrt
+import math
 import trueskill
 from trueskill import BETA, DRAW_PROBABILITY, MU, SIGMA, TAU
 
-# oops, trueskill gets very mad if you try to compare different types
-# of ratings. I will probably just go ahead and delete these TBD
-class UserRating(trueskill.Rating):
-    """Rating for users."""
-    def __init__(self, mu=None, sigma=None, name=None):
-        self.name = name
-        super().__init__(mu, sigma)
-    def update(self, rating):
-        """Updates rating."""
-        self.mu = rating.mu
-        self.sigma = rating.sigma
 
-class VariantRating(trueskill.Rating):
-    """Rating for variants."""
-    def __init__(self, mu=None, sigma=None, name=None):
-        self.name = name
-        super().__init__(mu, sigma)
-    def update(self, rating):
-        """Updates rating."""
-        self.mu = rating.mu
-        self.sigma = rating.sigma
+class Leaderboard():
+    """Manages multiple Trueskill environments."""
+    def __init__(self, team_sizes: list):
+        self.envs = {}
+        for num_players in team_sizes:
+            self.envs[num_players] = trueskill.TrueSkill()
 
-class NamedRating(trueskill.Rating):
-    """Rating for users."""
-    def __init__(self, mu=None, sigma=None, name=None):
-        self.name = name
-        super().__init__(mu, sigma)
-    def update(self, rating):
-        """Updates rating."""
-        self.mu = rating.mu
-        self.sigma = rating.sigma
+        self.users = {}
+        self.variants = {}
 
-class Leaderboard(trueskill.TrueSkill):
+    def update(self):
+        """Controls most stuff."""
+
+
+class LBEnvironment(trueskill.TrueSkill):
     """Environment for storing our ratings."""
     def __init__(self, mu=MU, sigma=SIGMA, beta=BETA, tau=TAU, draw_probability=DRAW_PROBABILITY, backend=None):
         self.variants = {}
@@ -93,8 +76,9 @@ class Leaderboard(trueskill.TrueSkill):
 
     def update_and_rate(self, variant, player_list, won, update_var=True):
         """Updates and rates based on variant and player names."""
+        variant_rating = self.variants.setdefault(variant, self.create_rating(is_variant=True))
         rating_groups = [
-            (self.variants.setdefault(variant, self.create_rating(is_variant=True)),),
+            tuple(variant_rating for i in range(variant[1])),
             tuple(self.users.setdefault(player, self.create_rating()) for player in player_list)
         ]
 
@@ -113,6 +97,59 @@ class Leaderboard(trueskill.TrueSkill):
             self.users[player] = rated_rating_groups[1][index]
 
         return rated_rating_groups
+
+
+class LBSoloEnvironment(LBEnvironment):
+    """Different "game" definition."""
+    def update_and_rate(self, variant, player_list, won, update_var=True):
+        """Each game has update rule:
+        - Variant updates rating based on team game against all players.
+        - Each player updates rating based on solo game against variant.
+        """
+        variant_rating = self.variants.setdefault(variant, self.create_rating(is_variant=True))
+
+        assert variant[1] in [2, 3, 4, 5, 6]
+        modifier = math.sqrt(variant[1])
+        player_ratings = [
+            self.users.setdefault(player,
+                self.create_rating(sigma=self.sigma / modifier))
+                for player in player_list
+        ]
+
+        rating_groups = [
+            tuple(variant_rating for i in range(variant[1])),
+            tuple(player_ratings)
+        ]
+
+        if won:
+            rated_rating_groups = self.rate(rating_groups, ranks=[1, 0])
+            for index, player in enumerate(player_list):
+                rating = self.rate([
+                    (variant_rating,),
+                    (player_ratings[index],)
+                ], ranks=[1, 0])[1][0]
+                self.users[player] = self.create_rating(mu=rating.mu,
+                    sigma=rating.sigma * modifier
+                )
+                print(self.users[player])
+        else:
+            rated_rating_groups = self.rate(rating_groups, ranks=[0, 1])
+            for index, player in enumerate(player_list):
+                rating = self.rate([
+                    (variant_rating,),
+                    (player_ratings[index],)
+                ], ranks=[0, 1])[1][0]
+                self.users[player] = self.create_rating(
+                    mu=rating.mu,
+                    sigma=rating.sigma * modifier
+                )
+
+
+        if update_var:
+            self.variants[variant] = rated_rating_groups[0][0]
+
+        return rated_rating_groups  # fix, oops.
+
 
 def get_average_of_column(table, index):
     """Returns the average of column index in a CSV table."""
