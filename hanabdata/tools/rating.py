@@ -1,7 +1,8 @@
 """Uses TrueSkill to assign ratings to users and variants."""
 
+from math import sqrt
 import trueskill
-# from trueskill import BETA, DRAW_PROBABILITY, MU, SIGMA, TAU
+from trueskill import BETA, DRAW_PROBABILITY, MU, SIGMA, TAU
 
 # oops, trueskill gets very mad if you try to compare different types
 # of ratings. I will probably just go ahead and delete these TBD
@@ -37,16 +38,25 @@ class NamedRating(trueskill.Rating):
 
 class Leaderboard(trueskill.TrueSkill):
     """Environment for storing our ratings."""
-    variants = {}
-    users = {}
-    # worried something is broken in here
-    # def __init__(self, mu=MU, sigma=SIGMA, beta=BETA, tau=TAU, draw_probability=DRAW_PROBABILITY, backend=None):
-    #     self.variants = {}
-    #     self.users = {}
-    #     super().__init__(mu, sigma, beta, tau, draw_probability, backend)
+    def __init__(self, mu=MU, sigma=SIGMA, beta=BETA, tau=TAU, draw_probability=DRAW_PROBABILITY, backend=None):
+        self.variants = {}
+        self.users = {}
+        self.variant_mu = mu
+        self.variant_sigma = sigma
+        super().__init__(mu, sigma, beta, tau, draw_probability, backend)
+
+    def set_variant_rating(self, mu, sigma=None, modify_beta=False):
+        """Sets variant rating"""
+        self.variant_mu = mu
+        if sigma is None:
+            sigma = mu / 3
+        self.variant_sigma = sigma
+
+        if modify_beta:
+            self.beta = self.variant_sigma / 2
 
     def get_variants(self):
-        """Simple getter function."""
+        """Returns variants in CSV format, sorted by exposure."""
         header = ["Game Type", "Variant Name", "Num Players", "Average", "Variance", "Exposure"]
         table = []
         for name, rating in self.variants.items():
@@ -58,10 +68,10 @@ class Leaderboard(trueskill.TrueSkill):
                 rating.sigma,
                 self.expose(rating)
             ])
-        return [header] + sorted(table, key=lambda x: -x[3])
+        return [header] + sorted(table, key=lambda x: -x[5])
 
     def get_users(self):
-        """Simple getter function."""
+        """Returns users in CSV format, sorted by exposure."""
         header = ["User", "Average", "Variance", "Exposure"]
         table = []
         for name, rating in self.users.items():
@@ -73,23 +83,19 @@ class Leaderboard(trueskill.TrueSkill):
             ])
         return [header] + sorted(table, key=lambda x: -x[3])
 
-    def create_rating(self, mu=None, sigma=None, name="test", is_variant=False):
+    def create_rating(self, mu=None, sigma=None, is_variant=False):
         """Specify name."""
         if mu is None:
-            mu = self.mu
+            mu = self.variant_mu if is_variant else self.mu
         if sigma is None:
-            sigma = mu / 3
-        if is_variant:
-            new_var = trueskill.Rating(mu, sigma)
-            return new_var
-        new_user = trueskill.Rating(mu, sigma)
-        return new_user
+            sigma = self.variant_sigma if is_variant else self.sigma
+        return trueskill.Rating(mu, sigma)
 
     def update_and_rate(self, variant, player_list, won, update_var=True):
         """Updates and rates based on variant and player names."""
         rating_groups = [
-            (self.variants.setdefault(variant, self.create_rating(mu=65.22,name=variant, is_variant=True)),),
-            tuple(self.users.setdefault(player, self.create_rating(name=player)) for player in player_list)
+            (self.variants.setdefault(variant, self.create_rating(is_variant=True)),),
+            tuple(self.users.setdefault(player, self.create_rating()) for player in player_list)
         ]
 
         # print("before:", rating_groups)
@@ -107,3 +113,13 @@ class Leaderboard(trueskill.TrueSkill):
             self.users[player] = rated_rating_groups[1][index]
 
         return rated_rating_groups
+
+def get_average_of_column(table, index):
+    """Returns the average of column index in a CSV table."""
+    assert len(table) > 1
+    total = 0.0
+    for i, line in enumerate(table):
+        if i == 0:
+            continue
+        total += line[index]
+    return total / (len(table) - 1)
