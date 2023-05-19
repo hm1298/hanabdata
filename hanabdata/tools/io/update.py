@@ -1,20 +1,31 @@
 """Tools to check status of and update data. Generally used by scripts"""
 from datetime import datetime
 from . import fetch, read
+from .. import structures
 
 def update_user(username: str, download_games=True):
     """Downloads and stores user summary data, then detects, downloads, and stores data from any 
     games user played not already downloaded."""
 
     print('Gathering prior data...')
-    if read.user_data_exists(username):
-        prior_data = read.read_user(username)
+    try: 
+        prior_data = structures.UserData.load(username).data
         start = prior_data[0]['id'] + 1
-        print('Found prior data')
-    else:
+        print(f'Found prior data containing {len(prior_data)} games')
+    except LookupError:
         prior_data = []
         start = 0
         print('No prior data found')
+
+    
+    #if read.user_data_exists(username):
+    #    prior_data = read.read_user(username)
+    #    start = prior_data[0]['id'] + 1
+    #    print('Found prior data')
+    #else:
+    #    prior_data = []
+    #    start = 0
+    #    print('No prior data found')
 
     print(f'Requesting {username}\'s data starting from {start}' )
     new_data = fetch.fetch_user(username, start)
@@ -22,8 +33,9 @@ def update_user(username: str, download_games=True):
         print("An error has occurred. User may have deleted their account.")
         return
     print(f'Received data for {len(new_data)} new games')
-    full_data = new_data + prior_data
-    read.write_user(username, full_data)
+    full_data = structures.UserData(new_data + prior_data, username)
+    full_data.save()
+    #read.write_user(username, full_data)
 
     update_metagames(username)
 
@@ -47,12 +59,13 @@ def update_seed(seed: str):
     if data == []:
         print('Server provided no seed data')
     else:
-        read.write_seed(seed, data)
+        structures.SeedData(data, seed).save()
+
 
 def update_game(game_id: int):
     """Updates a specific game."""
     data = fetch.fetch_game(game_id)
-    read.write_game_to_chunk(game_id, data)
+    structures.GameData(data, game_id).save()
 
 def update_chunk(chunk_number: int, exceptional_ids=None, exclude=True, end_on_error=False):
     """Updates all games in a chunk."""
@@ -74,7 +87,7 @@ def update_chunk(chunk_number: int, exceptional_ids=None, exclude=True, end_on_e
             if game_id in exceptional_ids:
                 ids.append(game_id)
 
-    games_dict = read.read_games_from_chunk(ids, ids[-1] // 1000)
+    games_dict = read.read_games_from_chunk(ids, ids[-1] // 1000) # broken -- unsure how to fix
     for game_id, game in games_dict.items():
         if game is None:
             response = fetch.fetch_game(game_id)
@@ -85,15 +98,15 @@ def update_chunk(chunk_number: int, exceptional_ids=None, exclude=True, end_on_e
             games_dict[game_id] = response
             num_updated += 1
         if (datetime.now() - current).total_seconds() > 20:
-            print(f"Fetched game with ID {game_id}, the {num_updated}th",
-                "update in this chunk since last print message.")
+            print(f"Fetched game with ID {game_id}, update number {num_updated}",
+                "in this chunk since last print message.")
             current, num_updated = datetime.now(), 0
     read.write_games_to_chunk(games_dict, chunk_number)
 
 def update_metagames(username: str):
     """Iterates over chunks based on ids."""
     try:
-        data = read.read_user(username)
+        data = structures.UserData.load(username)
     except FileNotFoundError:
         # data = fetch.fetch_user(username)
         # if data == "Error":
@@ -121,7 +134,7 @@ def update_metagames(username: str):
 
 def _find_missing_games(username: str, meta=False):
     """Iterates over chunks based on ids."""
-    data = read.read_user(username)
+    data = structures.UserData.load(username)
     ids = sorted([row["id"] for row in data], reverse=True)
     missing_ids = []
     while ids:

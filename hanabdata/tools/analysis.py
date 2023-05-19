@@ -39,7 +39,7 @@ class Analysis:
     def update_file(self, data):
         """Updates file if needed."""
         if self.write:
-            read._write_csv(self.file, data)
+            read.write_csv(self.file, data)
 
     # these next two methods are rough and probably should be removed
     # until needed. not sure what all this class should do yet
