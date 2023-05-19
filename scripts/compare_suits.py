@@ -23,7 +23,7 @@ if __name__ == "__main__":
     for i in range(2, 7):
         if i > 2:
             break
-        table = _read_csv(f"./data/processed/ratings/variants.csv")
+        table = _read_csv(f"./data/processed/ratings/variants_iter1.csv")
         table.pop(0)
         simple_suits, dark_suits = {}, {}
         for simple, dark in SUITS_DARKIFIED.items():
