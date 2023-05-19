@@ -22,29 +22,28 @@ def compare_teams(team1: list, team2: list, size=None, save=True, restriction=No
         if game["seed"] == "JSON":
             continue
         games[game["seed"]] = game
+    valid_games = {}
     for game in read_user(team2[0]):
         if not restriction.validate(game):
             continue
-        if team1 != sorted(game["playerNames"]):
+        if team2 != sorted(game["playerNames"]):
             continue
         if game["seed"] == "JSON":
             continue
-        entry = games.get(game["seed"], None)
-        if entry is None:
-            continue
-        games["seed"] = [games.get(game["seed"], None), game]
+        if game["seed"] in games:
+            valid_games[game["seed"]] = [games[game["seed"]], game]
+    print(f"{len(valid_games)} games found.")
     info = {"team1": team1, "team2": team2}
-    for _, entry in games.items():
-        if isinstance(entry, dict):
-            continue
+    for _, entry in valid_games.items():
         score = award_points(entry[0], entry[1])
-        info.setdefault(game["variantName"], [0, 0])
+        variant = entry[0]["options"]["variantName"]
+        info.setdefault(variant, [0, 0])
         if score == 0:
             continue
-        elif score < 0:
-            game["variantName"][1] -= score
+        if score < 0:
+            info[variant][1] -= score
         else:
-            game["variantName"][0] += score
+            info[variant][0] += score
     if save:
         save_to_file(info)
     return info
@@ -69,6 +68,8 @@ def save_to_file(info):
     """Saves to file."""
     name1 = "".join(s[:2] for s in info.pop("team1"))
     name2 = "".join(s[:2] for s in info.pop("team2"))
+    if info == {}:
+        return
     file_path = f'./data/processed/matchpoints/{name1}_{name2}.csv'
     header = ["Variant", name1, name2]
     header2 = ["TOTAL", 0, 0]
@@ -80,4 +81,4 @@ def save_to_file(info):
     _write_csv(file_path, table)
 
 if __name__ == "__main__":
-    print(compare_teams(["kimbifille", "piper", "pianoblook"], ["HelanaAshryvr", "MarkusKahlsen", "TimeHoodie"]))
+    compare_teams(["hallmark", "sodiumdebt"], ["a-real-pickle", "grubby_cubby"])
