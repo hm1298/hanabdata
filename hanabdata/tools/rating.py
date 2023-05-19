@@ -7,16 +7,79 @@ from trueskill import BETA, DRAW_PROBABILITY, MU, SIGMA, TAU
 
 class Leaderboard():
     """Manages multiple Trueskill environments."""
-    def __init__(self, team_sizes: list):
+    def __init__(self, team_sizes: list, variant_mu=MU):
         self.envs = {}
         for num_players in team_sizes:
-            self.envs[num_players] = trueskill.TrueSkill()
+            self.envs[num_players] = trueskill.TrueSkill(beta=math.sqrt(3/num_players)*BETA, draw_probability=0.0)
+            self.curr_env = self.envs[num_players]
+
+        self.variant_mu = variant_mu
 
         self.users = {}
         self.variants = {}
 
-    def update(self):
+    def update(self, variant, player_list, won, update_var=True):
         """Controls most stuff."""
+        env = self.envs[variant[1]]
+        variant_rating = self.variants.setdefault(variant, env.create_rating(mu=self.variant_mu, sigma=math.sqrt(3/variant[1])*self.variant_mu/3))
+        rating_groups = [
+            tuple(variant_rating for i in range(variant[1])),
+            tuple(self.users.setdefault(player, env.create_rating()) for player in player_list)
+        ]
+
+        if won:
+            rated_rating_groups = env.rate(rating_groups, ranks=[1, 0])
+        else:
+            rated_rating_groups = env.rate(rating_groups, ranks=[0, 1])
+
+        if update_var:
+            self.variants[variant] = rated_rating_groups[0][0]
+        for index, player in enumerate(player_list):
+            self.users[player] = rated_rating_groups[1][index]
+
+        return rated_rating_groups
+
+    def get_variants(self):
+        """Returns variants in CSV format, sorted by exposure."""
+        header = ["Game Type", "Variant Name", "Num Players", "Average", "Variance", "Exposure"]
+        table = []
+        for name, rating in self.variants.items():
+            table.append([
+                f"{name[0]} {name[1]}p",
+                name[0],
+                name[1],
+                rating.mu,
+                rating.sigma,
+                self.curr_env.expose(rating)
+            ])
+        return [header] + sorted(table, key=lambda x: -x[5])
+
+    def set_variants(self, table):
+        """Sets variants to predetermined values.
+
+        Takes as input a CSV format. Should be used in conjunction with
+        self.update_and_rate(...)'s paramater update_var set to False.
+        """
+        csv_iter = iter(table)
+        header = next(csv_iter)
+        index_mu = header.index("Average")
+        index_sigma = header.index("Variance")
+        for line in csv_iter:
+            self.variants[(line[1], int(line[2]))] = self.curr_env.create_rating(mu=float(line[index_mu]), sigma=float(line[index_sigma]))
+        print("Finished setting variant ratings.")
+
+    def get_users(self):
+        """Returns users in CSV format, sorted by exposure."""
+        header = ["User", "Average", "Variance", "Exposure"]
+        table = []
+        for name, rating in self.users.items():
+            table.append([
+                name,
+                rating.mu,
+                rating.sigma,
+                self.curr_env.expose(rating)
+            ])
+        return [header] + sorted(table, key=lambda x: -x[3])
 
 
 class LBEnvironment(trueskill.TrueSkill):
