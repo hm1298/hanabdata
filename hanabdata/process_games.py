@@ -3,6 +3,7 @@
 from datetime import datetime
 from hanabdata.tools.io import read
 from hanabdata.tools.io.update import update_chunk, update_user
+from hanabdata.tools import structures
 
 def get_player_and_seed_info():
     """Gets dict of all players in downloaded games."""
@@ -12,10 +13,10 @@ def get_player_and_seed_info():
     chunk_list = sorted([int(y) for y in read.get_file_names("./data/raw/games")])
     for chunk in chunk_list:
         try:
-            data = read.read_chunk(chunk)
+            data = structures.Chunk.load(chunk)
         except ValueError:
             update_chunk(chunk)
-            data = read.read_chunk(chunk)
+            data = structures.Chunk.load(chunk)
         for game in data:
             if game is None or game == "Error":
                 continue

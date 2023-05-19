@@ -48,7 +48,7 @@ def read_games_from_chunk(games: list, chunk: int, meta=False):
             if meta:
                 data = structures.ChunkMeta.load(chunk)
             else: 
-                data = structures.ChunkData.load(chunk)
+                data = structures.Chunk.load(chunk)
         except ValueError:
             data = [None] * 1000
     else:
@@ -63,16 +63,16 @@ def read_games_from_chunk(games: list, chunk: int, meta=False):
 def write_games_to_chunk(games: dict, chunk: int, meta=False):
     # note file should exist if this function is called. checks anyway
     if meta:
-        chunk_path = f'./data/preprocessed/games/{chunk}'
+        chunk_path = f'./data/preprocessed/games/{chunk}.json'
     else:
-        chunk_path = f'data/raw/games{chunk}'
+        chunk_path = f'data/raw/games{chunk}.json'
 
     if file_exists(chunk_path):
         try:
             if meta:
                 data = structures.ChunkMeta.load(chunk)
             else: 
-                data = structures.ChunkData.load(chunk)
+                data = structures.Chunk.load(chunk)
         except ValueError:
             data = [None] * 1000
     else:
@@ -109,7 +109,7 @@ def read_json(file_path):
             raise e
     return data
 
-def write_json(file_path, txt):
+def write_json(file_path, txt: str):
     with open(file_path, 'w', encoding="utf8") as outfile:
         json.dump(txt, outfile)
 
@@ -118,7 +118,7 @@ def read_csv(file_path):
         csvreader = csv.reader(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         return list(csvreader)
 
-def write_csv(file_path, data):
+def write_csv(file_path, data: list):
     with open(file_path, 'w', newline='', encoding='utf-8') as csvfile:
         csvwriter = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         csvwriter.writerows(data)

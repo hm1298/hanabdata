@@ -5,21 +5,24 @@ Defaults to json filetype."""
 from hanabdata.tools.io import read
 
 
-class GeneralData:
-    """Basic wrapper class"""
+class Data:
+    """Basic wrapper class to handle datatype."""
     basepath = None
     extension = 'json'
 
-    def __init__(self, data, data_id: str, basepath=None, extension=None):
+    def __init__(self, data, data_id, basepath=None, extension=None):
         self.data = data
         if basepath is not None:
             self.basepath = basepath
         if extension is not None:
             self.extension = extension
-        self.id = data_id
+        self.id = str(data_id)
 
     def __getitem__(self, key):
         return self.data[key]
+
+    def __setitem__(self, key, val):
+        self.data[key] = val
 
     def __repr__(self):
         return f'{self.data}'
@@ -60,40 +63,39 @@ class GeneralData:
             raise LookupError(f'Data does not exist at {parsed_path}/{data_id}.{parsed_extension}!') from e  
         return cls(data, data_id, basepath=basepath, extension=extension)
 
-class ChunkData(GeneralData):
+class Chunk(Data):
     """Wrapper for groups of games."""
     basepath = 'data/raw/games'
 
-class ChunkMeta(GeneralData):
+class ChunkMeta(Data):
     """Wrapper for storing meta data"""
     basepath = './data/preprocessed/games'
 
-class SeedData(GeneralData):
+class Seed(Data):
     """Wrapper for seeds."""
     basepath = 'data/raw/seeds'
 
-class UserData(GeneralData):
+class User(Data):
     """Wrapper for users."""
     basepath = 'data/raw/users'
 
-
-class GameData(GeneralData):
+class Game(Data):
     """Wrapper class for working with a single game at a time. 
     If working with multiple games, GamesIterator is preferable"""
 
     def save(self):
         chunk_id, index = self._get_chunk_and_index(self.id)
         try:
-            chunk = ChunkData.load(chunk_id)
-        except FileNotFoundError:
-            chunk = ChunkData([None] * 1000, chunk_id)
+            chunk = Chunk.load(chunk_id)
+        except LookupError:
+            chunk = Chunk([None] * 1000, chunk_id)
         chunk.data[index] = self.data
         chunk.save()
     
     @classmethod
     def load(cls, data_id):
         chunk_id, index = cls._get_chunk_and_index(data_id)
-        chunk = ChunkData.load(chunk_id)
+        chunk = Chunk.load(chunk_id)
         game_data = chunk.data[index]
         if game_data == 'Error' or game_data is None:
             raise LookupError('game data does not exist!')
@@ -103,7 +105,6 @@ class GameData(GeneralData):
     def _get_chunk_and_index(data_id):
         """returns chunk and index for a given game"""
         return data_id // 1000, data_id % 1000
-
 
 
 class GamesIterator:
@@ -119,7 +120,7 @@ class GamesIterator:
     def set_current(self):
         """Opens the next file and reads as JSON."""
         self.curr_chunk = chunk_num = self.chunk_list.pop()
-        self.current = ChunkData.load(chunk_num)
+        self.current = Chunk.load(chunk_num)
         self.index = 0
 
     def is_valid(self, game):

@@ -9,7 +9,7 @@ def update_user(username: str, download_games=True):
 
     print('Gathering prior data...')
     try: 
-        prior_data = structures.UserData.load(username).data
+        prior_data = structures.User.load(username).data
         start = prior_data[0]['id'] + 1
         print(f'Found prior data containing {len(prior_data)} games')
     except LookupError:
@@ -33,10 +33,9 @@ def update_user(username: str, download_games=True):
         print("An error has occurred. User may have deleted their account.")
         return
     print(f'Received data for {len(new_data)} new games')
-    full_data = structures.UserData(new_data + prior_data, username)
+    full_data = structures.User(new_data + prior_data, username)
     full_data.save()
     #read.write_user(username, full_data)
-
     update_metagames(username)
 
     if download_games:
@@ -59,13 +58,13 @@ def update_seed(seed: str):
     if data == []:
         print('Server provided no seed data')
     else:
-        structures.SeedData(data, seed).save()
+        structures.Seed(data, seed).save()
 
 
 def update_game(game_id: int):
     """Updates a specific game."""
     data = fetch.fetch_game(game_id)
-    structures.GameData(data, game_id).save()
+    structures.Game(data, game_id).save()
 
 def update_chunk(chunk_number: int, exceptional_ids=None, exclude=True, end_on_error=False):
     """Updates all games in a chunk."""
@@ -106,8 +105,8 @@ def update_chunk(chunk_number: int, exceptional_ids=None, exclude=True, end_on_e
 def update_metagames(username: str):
     """Iterates over chunks based on ids."""
     try:
-        data = structures.UserData.load(username)
-    except FileNotFoundError:
+        data = structures.User.load(username)
+    except LookupError:
         # data = fetch.fetch_user(username)
         # if data == "Error":
         #     return
@@ -134,7 +133,7 @@ def update_metagames(username: str):
 
 def _find_missing_games(username: str, meta=False):
     """Iterates over chunks based on ids."""
-    data = structures.UserData.load(username)
+    data = structures.User.load(username)
     ids = sorted([row["id"] for row in data], reverse=True)
     missing_ids = []
     while ids:
