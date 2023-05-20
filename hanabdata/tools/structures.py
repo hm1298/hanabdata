@@ -78,7 +78,7 @@ class Data:
 
 class Chunk(Data):
     """Wrapper for groups of games."""
-    basepath = 'data/raw/games'
+    basepath = './data/raw/games'
     
     @classmethod
     def load_safe(cls, data_id, basepath=None, extension=None):
@@ -94,11 +94,11 @@ class ChunkMeta(Data):
 
 class Seed(Data):
     """Wrapper for seeds."""
-    basepath = 'data/raw/seeds'
+    basepath = './data/raw/seeds'
 
 class User(Data):
     """Wrapper for users."""
-    basepath = 'data/raw/users'
+    basepath = './data/raw/users'
 
 class Game(Data):
     """Wrapper class for working with a single game at a time. 
@@ -210,5 +210,5 @@ class GamesIterator:
             
 class ScoreHuntData(Data):
     extension = 'csv'
-    basepath = 'data/processed/score_hunts'
+    basepath = './data/processed/score_hunts'
 

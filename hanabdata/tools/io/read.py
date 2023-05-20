@@ -81,14 +81,14 @@ def read_games_from_chunk(games: list, chunk: int, meta=False):
         values - game data for matching ID from file (could be None)
     """
     if meta:
-        chunk_path = f'./data/preprocessed/games/{chunk}'
+        chunk_path = f'./data/preprocessed/games/{chunk}.json'
     else:
-        chunk_path = f'./data/raw/games/{chunk}'
+        chunk_path = f'./data/raw/games/{chunk}.json'
     if file_exists(chunk_path):
         try:
             if meta:
                 data = structures.ChunkMeta.load(chunk)
-            else: 
+            else:
                 data = structures.Chunk.load(chunk)
         except ValueError:
             data = [None] * 1000
