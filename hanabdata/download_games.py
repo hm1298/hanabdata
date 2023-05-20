@@ -1,8 +1,8 @@
 """Downloads games."""
 
-from hanabdata.tools.io.read import get_file_names, read_chunk
+from hanabdata.tools.io.read import get_file_names
 from hanabdata.tools.io.update import update_game, update_chunk
-
+from hanabdata.tools.structures import Chunk
 def download(game_id: int):
     """Downloads game."""
     update_game(game_id)
@@ -27,7 +27,7 @@ def get_last_game():
     print(get_file_names)
 
     chunk_num = max(int(f) for f in get_file_names(chunk_path))
-    chunk_data = read_chunk(chunk_num)
+    chunk_data = Chunk.load(chunk_num).data
     max_game_id = 0
     for game in chunk_data:
         if isinstance(game, dict):

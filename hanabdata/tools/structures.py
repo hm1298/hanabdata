@@ -124,7 +124,7 @@ class GamesIterator:
         self.index = 0
 
     def is_valid(self, game):
-        """Retruns True if a game is valid; False otherwise."""
+        """Returns True if a game is valid; False otherwise."""
         try:
             game["id"]
         except TypeError:

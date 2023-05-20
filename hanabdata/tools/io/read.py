@@ -65,14 +65,14 @@ def write_games_to_chunk(games: dict, chunk: int, meta=False):
     if meta:
         chunk_path = f'./data/preprocessed/games/{chunk}.json'
     else:
-        chunk_path = f'data/raw/games{chunk}.json'
+        chunk_path = f'data/raw/games/{chunk}.json'
 
     if file_exists(chunk_path):
         try:
             if meta:
-                data = structures.ChunkMeta.load(chunk)
+                data = structures.ChunkMeta.load(chunk).data
             else: 
-                data = structures.Chunk.load(chunk)
+                data = structures.Chunk.load(chunk).data
         except ValueError:
             data = [None] * 1000
     else:
