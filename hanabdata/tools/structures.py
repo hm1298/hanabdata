@@ -6,7 +6,7 @@ from hanabdata.tools.io import read
 
 
 class Data:
-    """Basic wrapper class to handle datatype."""
+    """Basic wrapper class to handle data."""
     basepath = None
     extension = 'json'
 
@@ -66,6 +66,14 @@ class Data:
 class Chunk(Data):
     """Wrapper for groups of games."""
     basepath = 'data/raw/games'
+    
+    @classmethod
+    def load_safe(cls, data_id, basepath=None, extension=None):
+        """Attempts to load chunk. If none exists, generates a chunk with empty data."""
+        try:
+            return cls.load(data_id, basepath=None, extension=None)
+        except LookupError:
+            return cls([None]*1000, data_id, basepath=None, extension=None)
 
 class ChunkMeta(Data):
     """Wrapper for storing meta data"""
@@ -105,6 +113,45 @@ class Game(Data):
     def _get_chunk_and_index(data_id):
         """returns chunk and index for a given game"""
         return data_id // 1000, data_id % 1000
+
+class Games(Data):
+    """Games is a structure to contain a list of games. Games should be 
+    sorted by ID (increasing or decreasing or random within chunk is OK) 
+    for optimized filesystem access. Saving games inserts them existing 
+    chunks and so will not delete any previously-saved game data but will overwrite."""
+    
+    def __init__(self, games, **kwargs):
+        super().__init__(games, None, **kwargs)
+
+    def save(self):
+        open_chunk = None
+        for game in self.data:
+            chunk_id, index = Game._get_chunk_and_index(game["id"])
+            if open_chunk is None:
+                open_chunk = Chunk.load_safe(chunk_id)
+            elif open_chunk.id != chunk_id:
+                open_chunk.save()
+                open_chunk = Chunk.load_safe(chunk_id)
+            open_chunk[index] = game
+        open_chunk.save()
+    
+    @classmethod
+    def load(cls, game_ids):
+        open_chunk = None
+        games = []
+        missing_ids = []
+        for game_id in game_ids:
+            chunk_id, index = Game._get_chunk_and_index(game_id)
+            if open_chunk is None or open_chunk.id != chunk_id:
+                open_chunk = Chunk.load_safe(chunk_id)
+            game = open_chunk[index]
+            if game is not None and game != "Error":
+                games.append(game)
+            else:
+                missing_ids.append(game_id)
+            
+        return cls(games), missing_ids          
+               
 
 
 class GamesIterator:
