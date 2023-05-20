@@ -5,14 +5,12 @@ data/processed/score_hunts.
 
 import datetime
 from hanabdata.tools.analysis import Analysis
-from hanabdata.tools.restriction import STANDARD_2P, has_winning_score
-from hanabdata.tools.io.read import read_user, write_score_hunt  #, _read_csv
-
-
+from hanabdata.tools.restriction import STANDARD_2P, has_winning_score 
+from hanabdata.tools.structures import User, ScoreHuntData
 def analyze_2P_score_hunt(username: str, restriction=STANDARD_2P):
     """A function that creates the CSV in the original for loop."""
 
-    data = read_user(username)
+    data = User.load(username).data
 
     # table stores the information for the CSV writer, and score_hunt
     # stores the table indices for each variant
@@ -48,7 +46,7 @@ def analyze_2P_score_hunt(username: str, restriction=STANDARD_2P):
             line[3] += duration
             line[4] += 1
 
-    write_score_hunt(username, table)
+    ScoreHuntData(table, username).save()
 
 
 class ScoreHunt(Analysis):
@@ -143,7 +141,7 @@ def scorehunt_with_class(username: str, restriction=STANDARD_2P):
     file_path = f'./data/processed/score_hunts/{username}.csv'
     sh = ScoreHunt(dummy_func, write_to_file=file_path)
     sh.set_filter(restriction)
-    sh.add_data(reversed(read_user(username)))
+    sh.add_data(reversed(User.load(username).data))
     sh.analyze()
 
 if __name__ == '__main__':
