@@ -1,9 +1,11 @@
-"""Wrapper classes for data structures. Handles saving and loading from file or from data.
-Using GeneralData directly requires providing a basepath for saving and loading. 
-Defaults to json filetype."""
+"""Wrapper classes for data structures. 
+
+Handles saving and loading from file or from data.
+Using Data directly requires providing a basepath for saving and loading. 
+Defaults to json filetype.
+"""
 # pylint: disable=arguments-differ
 from hanabdata.tools.io import read
-
 
 class Data:
     """Basic wrapper class to handle data."""
@@ -151,8 +153,6 @@ class Games(Data):
                 missing_ids.append(game_id)
             
         return cls(games), missing_ids          
-               
-
 
 class GamesIterator:
     """Iterates over all games metadata"""
