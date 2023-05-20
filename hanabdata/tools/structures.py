@@ -7,8 +7,19 @@ Defaults to json filetype.
 # pylint: disable=arguments-differ
 from hanabdata.tools.io import read
 
+
+
+
+class DatabaseError(Exception):
+    """Raised when information is accessed that does not exist in the database"""
+
+
+
 class Data:
-    """Basic wrapper class to handle data."""
+    """Basic wrapper class to handle data.
+    
+    basepath should not end with a '/'. 
+    """
     basepath = None
     extension = 'json'
 
@@ -43,7 +54,7 @@ class Data:
     
     @classmethod
     def load(cls, data_id, basepath=None, extension=None):
-        """loads data from  system. If the data does not exist, raises a LookupError"""
+        """loads data from  system. If the data does not exist, raises a DatabaseError"""
         if basepath is None:
             parsed_path = cls.basepath
         else:
@@ -62,7 +73,7 @@ class Data:
         try:
             data = reader(path) 
         except FileNotFoundError as e:
-            raise LookupError(f'Data does not exist at {parsed_path}/{data_id}.{parsed_extension}!') from e  
+            raise DatabaseError(f'Data does not exist at {parsed_path}/{data_id}.{parsed_extension}!') from e  
         return cls(data, data_id, basepath=basepath, extension=extension)
 
 class Chunk(Data):
@@ -74,7 +85,7 @@ class Chunk(Data):
         """Attempts to load chunk. If none exists, generates a chunk with empty data."""
         try:
             return cls.load(data_id, basepath=None, extension=None)
-        except LookupError:
+        except DatabaseError:
             return cls([None]*1000, data_id, basepath=None, extension=None)
 
 class ChunkMeta(Data):
@@ -94,10 +105,10 @@ class Game(Data):
     If working with multiple games, GamesIterator is preferable"""
 
     def save(self):
-        chunk_id, index = self._get_chunk_and_index(self.id)
+        chunk_id, index = self._get_chunk_and_index(int(self.id))
         try:
             chunk = Chunk.load(chunk_id)
-        except LookupError:
+        except DatabaseError:
             chunk = Chunk([None] * 1000, chunk_id)
         chunk.data[index] = self.data
         chunk.save()
@@ -108,7 +119,7 @@ class Game(Data):
         chunk = Chunk.load(chunk_id)
         game_data = chunk.data[index]
         if game_data == 'Error' or game_data is None:
-            raise LookupError('game data does not exist!')
+            raise DatabaseError('game data does not exist!')
         return cls(game_data, data_id)
 
     @staticmethod
@@ -197,4 +208,7 @@ class GamesIterator:
             if self.is_valid(game):
                 return game
             
+class ScoreHuntData(Data):
+    extension = 'csv'
+    basepath = 'data/processed/score_hunts'
 
