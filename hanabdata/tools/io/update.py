@@ -18,19 +18,11 @@ def update_user(username: str, download_games=True):
         print('No prior data found')
 
     
-    #if read.user_data_exists(username):
-    #    prior_data = read.read_user(username)
-    #    start = prior_data[0]['id'] + 1
-    #    print('Found prior data')
-    #else:
-    #    prior_data = []
-    #    start = 0
-    #    print('No prior data found')
-
     print(f'Requesting {username}\'s data starting from {start}' )
     new_data = fetch.fetch_user(username, start)
     if new_data == "Error":
-        print("An error has occurred. User may have deleted their account.")
+        print("An error has occurred. User may have deleted their account", 
+              "or account may have never existed.")
         return
     print(f'Received data for {len(new_data)} new games')
     full_data = structures.User(new_data + prior_data, username)
