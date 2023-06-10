@@ -1,5 +1,7 @@
 """"Handles all calls to hanab.live. Returns JSONs."""
 
+from threading import Thread, active_count
+import time 
 import requests
 
 SITE = "https://hanab.live/api/v1"
@@ -77,31 +79,55 @@ def fetch_url(url, verbose=True):
         - JSON object that was downloaded, defaults to empty list
         - Exception type if an error occurred, else None
     """
-    try:
-        if verbose:
+    if verbose:
             print(f"Fetching from {url}")
+
+
+    try:     
         response = requests.get(url, timeout=MAX_TIME)
-        try:
-            data = response.json()
-        except ValueError as exc:
-            if response.text[:5] == "Error":
-                return "Error", None
-            print(f"ERROR: {url} failed to return a valid JSON object.")
-            print("Unexpected error message from site:\n")
-            print(response.text + "\n")
-            raise exc
-        return data, None
     except BaseException as e:
         print(f"Unable to complete request to {url}")
         return [], e
+    
+    try:
+        data = response.json()
+    except ValueError as exc:
+        if response.text[:5] == "Error":
+            return "Error", None
+        print(f"ERROR: {url} failed to return a valid JSON object.")
+        print("Unexpected error message from site:\n")
+        print(response.text + "\n")
+        raise exc
+    return data, None
 
-def fetch_game(game_id: str):
+
+def fetch_game(game_id: int):
     """Fetches a game. Raises error if unable."""
     endpoint = f'https://hanabi.live/export/{game_id}'
     return _fetch_url_or_error(endpoint)
 
+def fetch_games_threaded(game_ids: list):
+    """Creates a thread for each game and fetches them.
+    
+    Returns a dictionary of the games (key = game id, val = game data)
+    along with a list of IDs for which the requests failed.
+    """
+    MAX_THREADS = 1000
+    if len(game_ids) > MAX_THREADS:
+        print(f"Don't overloaf the server by submitting more than {MAX_THREADS} games at once!")
+        return 
+    games_dict = {}
+    failed = []
+    for game_id in game_ids:
+        game_thread = Thread(target = _fetch_to_dict_or_failures, args=(game_id, games_dict, failed))
+        game_thread.start()
+    while active_count() > 1:
+        # wait until all threads have resolved
+        time.sleep(0.1)
+    return games_dict, failed
+
 def fetch_seed(seed: str):
-    """Fetches a seed. Raises error if unable."""
+    """Fetches a seed's data. Raises error if unable."""
     endpoint = f'{SITE}/seed-full/{seed}'
     return _fetch_url_or_error(endpoint)
 
@@ -158,3 +184,11 @@ def _fetch_url_or_error(url, verbose=False):
     if error:
         raise error
     return response
+
+def _fetch_to_dict_or_failures(game_id, d, failed_ids):
+    """Attempts to fetch a game and adds it the dictionary. 
+    If it fails, adds it to the list of failed games."""
+    try:
+        d[game_id] = fetch_game(game_id)
+    except BaseException:
+        failed_ids.append(game_id)
