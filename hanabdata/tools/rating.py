@@ -120,7 +120,11 @@ class LBSoloEnvironment(LBEnvironment):
         - Variant updates rating based on team game against all players.
         - Each player updates rating based on solo game against variant.
         """
-        variant_rating = self.variants[variant]
+        try:
+            variant_rating = self.variants[variant]
+        except KeyError:
+            self.variants[variant] = self.create_rating(is_variant=True)
+            variant_rating = self.variants[variant]
         player_ratings = [
             self.users.setdefault(
                 player,
@@ -141,8 +145,13 @@ class LBSoloEnvironment(LBEnvironment):
             rated_rating_groups = self.rate(rating_groups, ranks=ranks)
 
             self.users[player] = rated_rating_groups[1][0]
-            if update_var:
-                self.variants[variant] = rated_rating_groups[0][0]
+
+        if update_var:
+            rating_groups = [
+                (variant_rating for _ in player_ratings),
+                tuple(player_ratings)
+            ]
+            self.variants[variant] = rated_rating_groups[0][0]
 
         return rated_rating_groups  # not super useful atm
 
