@@ -68,8 +68,12 @@ def get_users():
 def get_game_ids():
     """Returns a list of game IDs from the old format."""
     return get_file_names("./data/raw/games")
-   
+
 # functions which should be deprecated in the future
+
+def write_ratings(type_of_entries, data):
+    file_path = f"data/processed/ratings/{type_of_entries}.csv"
+    write_csv(file_path, data)
 
 def read_games_from_chunk(games: list, chunk: int, meta=False):
     """Assumes games is sorted reverse chronologically.

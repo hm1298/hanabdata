@@ -1,24 +1,28 @@
 """Iterates through all available metadata in preprocessed/games."""
 
 from datetime import datetime
-import sys
 from whr import whole_history_rating
 from whr.utils import test_stability
 from hanabdata.process_games import get_players_with_x_games
 from hanabdata.tools.rating import Leaderboard, get_average_of_column
-from hanabdata.tools.io.read import GamesIterator, write_ratings, _read_csv
+from hanabdata.tools.structures import GamesIterator
+from hanabdata.tools.io.read import write_ratings, read_csv
 from hanabdata.tools.restriction import get_standard_restrictions, has_winning_score
 
 
 DAY_ZERO = datetime.fromisoformat("2018-01-18T01:53:29Z").date()
 NUM_PLAYERS = 2
 SUGGESTED_MU = 33.99609022761532
+TEAM_SIZES = [3, 4, 5, 6]
 
 def get_ratings(avg=73.6, restriction=get_standard_restrictions(), run=1):
     """Implements this module."""
-    lb = Leaderboard([2, 3, 4, 5, 6], variant_mu=avg)
+    lb = Leaderboard(TEAM_SIZES, variant_mu=avg)
     # lb.set_variant_rating(avg, modify_beta=True)
-    # lb.set_variants(_read_csv(f"./data/processed/ratings/variants_iter{run}.csv"))
+    try:
+        lb.set_variants(read_csv(f"./data/processed/ratings/variants_beta{run}.csv"))
+    except FileNotFoundError:
+        print(f"No file found on run {run}.")
     gi = GamesIterator(oldest_to_newest=True)
 
     current = datetime.now()
@@ -28,8 +32,8 @@ def get_ratings(avg=73.6, restriction=get_standard_restrictions(), run=1):
     for i, game in enumerate(gi):
         if not restriction.validate(game):
             continue
-        # if game["options"]["numPlayers"] == 2:
-        #     continue
+        if game["options"]["numPlayers"] not in TEAM_SIZES:
+            continue
         v = (game["options"]["variantName"], game["options"]["numPlayers"])
         players = game["playerNames"]
         # valid_games += 1
@@ -72,7 +76,7 @@ def print_ratings():
 
 def find_appropriate_defaults(how_long: int, step_weight=1.99, margin_of_error=0.1, search=True):
     """Searches for an appropriate default lb.variant_mu value."""
-    current_error, mu, i = 100.0, SUGGESTED_MU, 0
+    current_error, mu, i = 100.0, SUGGESTED_MU, 2
     while i < how_long:
         variant_table, _ = get_ratings(avg=mu, run=i)
         current_avg = get_average_of_column(variant_table, 3)
@@ -206,6 +210,6 @@ def save_rating_to_file(ratings, var_set, run=3):
     write_ratings(f"variants_whr{run}", variants_table[::-1])
 
 if __name__ == "__main__":
-    # print(find_appropriate_defaults(1, search=False))
+    print(find_appropriate_defaults(10, search=False))
     # sys.setrecursionlimit(200000) <- causes Segmentation faults
-    save_whr(10 * 60 * 60)
+    # save_whr(10 * 60 * 60)

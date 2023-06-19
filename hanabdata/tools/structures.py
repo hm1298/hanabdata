@@ -178,7 +178,7 @@ class GamesIterator:
     def set_current(self):
         """Opens the next file and reads as JSON."""
         self.curr_chunk = chunk_num = self.chunk_list.pop()
-        self.current = Chunk.load(chunk_num)
+        self.current = ChunkMeta.load(chunk_num)
         self.index = 0
 
     def is_valid(self, game):

@@ -8,7 +8,7 @@ def update_user(username: str, download_games=True):
     games user played not already downloaded."""
 
     print('Gathering prior data...')
-    try: 
+    try:
         prior_data = structures.User.load(username).data
         start = prior_data[0]['id'] + 1
         print(f'Found prior data containing {len(prior_data)} games')
@@ -17,7 +17,7 @@ def update_user(username: str, download_games=True):
         start = 0
         print('No prior data found')
 
-    
+
     print(f'Requesting {username}\'s data starting from {start}' )
     new_data = fetch.fetch_user(username, start)
     if new_data == "Error":
