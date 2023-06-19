@@ -6,11 +6,15 @@ from hanabdata.tools.rating import LBSoloEnvironment, get_average_of_column
 from hanabdata.tools.io.read import GamesIterator, write_ratings, _read_csv
 from hanabdata.tools.restriction import get_standard_restrictions, has_winning_score
 
-NUM_PLAYERS = 4
+NUM_PLAYERS = 3
+TRACKED_PLAYERS = ["HelanaAshryvr", "MarkusKahlsen", "TimeHoodie", "piper", "pianoblook", "Lanvin"]
+UPDATE_IN_DAYS = 7
+# for 2p,
+# SUGGESTED_MU = 31.0
 # for 3p,
-# SUGGESTED_MU = 33.601927130816925
+SUGGESTED_MU = 33.6
 # for 4p,
-SUGGESTED_MU = 36.3
+# SUGGESTED_MU = 36.3
 # for 5p,
 # SUGGESTED_MU = 47.5
 
@@ -29,6 +33,8 @@ def get_ratings(avg=73.6, restriction=get_standard_restrictions(NUM_PLAYERS), ru
     # valid_games, total_wins = 0, 0
     # num_games_played = {}
     # valid_players = get_players_with_x_games(100)
+    player_info = {player: [None] for player in TRACKED_PLAYERS}
+    prev_date = datetime.fromisoformat("2018-01-01T01:00:00Z")
     for i, game in enumerate(gi):
         if not restriction.validate(game):
             continue
@@ -59,6 +65,16 @@ def get_ratings(avg=73.6, restriction=get_standard_restrictions(NUM_PLAYERS), ru
         # if i > 100000:
         #     break
 
+        try:
+            curr_date = datetime.fromisoformat(game["datetimeFinished"])
+        except KeyError as e:
+            print(game)
+            raise e
+        if (curr_date - prev_date).days > UPDATE_IN_DAYS:
+            prev_date = curr_date
+            for player in TRACKED_PLAYERS:
+                player_info[player].append(lb.get_player_ranking(player))
+
         if (datetime.now() - current).total_seconds() > 20:
             print(f"Finished updating ratings for {i} games.")
             current = datetime.now()
@@ -66,6 +82,7 @@ def get_ratings(avg=73.6, restriction=get_standard_restrictions(NUM_PLAYERS), ru
     # print(f"Total winrate is {total_wins / valid_games}.")
     print(f"Saved ratings with variant mu = {avg} to file.")
 
+    write_ratings(f"tracked_players", [[player] + player_info[player] for player in TRACKED_PLAYERS])
     write_ratings(f"users{file_infix}{run+1}", lb.get_users())
     write_ratings(f"variants{file_infix}{run+1}", lb.get_variants())
     return lb.get_variants(), lb.get_users()
@@ -76,7 +93,7 @@ def print_ratings():
 
 def find_appropriate_defaults(how_long: int, step_weight=1.99, margin_of_error=0.1, search=True):
     """Searches for an appropriate default lb.variant_mu value."""
-    current_error, current_avg, i = 100.0, SUGGESTED_MU, 0
+    current_error, current_avg, i = 100.0, SUGGESTED_MU, 11
     while i < how_long:
         variant_table, _ = get_ratings(avg=current_avg, run=i)
         current_avg = get_average_of_column(variant_table, 3)
@@ -89,4 +106,8 @@ def find_appropriate_defaults(how_long: int, step_weight=1.99, margin_of_error=0
     return current_avg
 
 if __name__ == "__main__":
-    print(find_appropriate_defaults(10, search=False))
+    print(find_appropriate_defaults(12, search=False))
+
+# changed set_variants() to use sigma = mu / 3 rather than
+# old sigma, and ending average mu changed from 33.6 over
+# iterations to 34.97 in latest iteration. hmm.

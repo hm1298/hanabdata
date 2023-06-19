@@ -62,9 +62,10 @@ class LBEnvironment(trueskill.TrueSkill):
         csv_iter = iter(table)
         header = next(csv_iter)
         index_mu = header.index("Average")
-        index_sigma = header.index("Variance")
+        # index_sigma = header.index("Variance")
         for line in csv_iter:
-            self.variants[(line[1], int(line[2]))] = self.create_rating(mu=float(line[index_mu]), sigma=float(line[index_sigma]), is_variant=True)
+            line_mu = float(line[index_mu])
+            self.variants[(line[1], int(line[2]))] = self.create_rating(mu=line_mu, sigma=line_mu/3, is_variant=True)
         print("Finished setting variant ratings.")
 
     def get_users(self):
@@ -111,6 +112,18 @@ class LBEnvironment(trueskill.TrueSkill):
             self.users[player] = rated_rating_groups[1][index]
 
         return rated_rating_groups
+
+    def get_player_ranking(self, player_name):
+        """Returns player ranking among all players in self.users."""
+        if player_name not in self.users:
+            return None
+        player_rating = self.expose(self.users[player_name])
+        player_ranking = 1
+        for _, rating in self.users.items():
+            user_rating = self.expose(rating)
+            if player_rating < user_rating:
+                player_ranking += 1
+        return player_ranking
 
 
 class LBSoloEnvironment(LBEnvironment):
