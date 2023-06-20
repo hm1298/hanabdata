@@ -81,6 +81,18 @@ class Leaderboard():
             ])
         return [header] + sorted(table, key=lambda x: -x[3])
 
+    def get_player_ranking(self, player_name):
+        """Returns player ranking among all players in self.users."""
+        if player_name not in self.users:
+            return None
+        player_rating = self.curr_env.expose(self.users[player_name])
+        player_ranking = 1
+        for _, rating in self.users.items():
+            user_rating = self.curr_env.expose(rating)
+            if player_rating < user_rating:
+                player_ranking += 1
+        return player_ranking
+
 
 class LBEnvironment(trueskill.TrueSkill):
     """Environment for storing our ratings."""
@@ -245,6 +257,49 @@ class LBSoloEnvironment(LBEnvironment):
                 self.expose(rating)
             ])
         return [header] + sorted(table, key=lambda x: -x[5])
+
+
+class MatchPointLB(LBEnvironment):
+    """Leaderboard for users only; no variant ratings tracked.
+
+    Make sure to initialize with large draw_probability. See method
+    MatchPointLB.update_and_rate() for more info.
+    """
+    seeds = {}
+
+    def update_and_rate(self, game, won):
+        """Updates user ratings according to the following rule.
+
+        The team of N players have current ratings. They play a N:...:N
+        free-for-all against all previous players of the seed, using old
+        ratings. A perfect score ensures a first place finish, and a less
+        than perfect score ensures a last place finish. Two teams that
+        both receive a perfect score or both do not receive a perfect
+        score are said to have tied.
+
+        Old player ratings are saved before update from playing the seed.
+        """
+        player_list = game["playerNames"]
+        player_ratings = tuple(
+            self.users.setdefault(
+                player,
+                self.create_rating()
+            ) for player in player_list
+        )
+
+        rank_value = 0 if won else 1
+        ranks, rating_groups = [rank_value], [player_ratings]
+
+        for match in self.seeds.setdefault(game["seed"], []):
+            ranks.append(match[0])
+            rating_groups.append(match[1])
+        self.seeds[game["seed"]].append((rank_value, player_ratings))
+        if len(rating_groups) == 1:
+            return
+
+        new_ratings = self.rate(rating_groups, ranks=ranks)[0]
+        for i, player in enumerate(player_list):
+            self.users[player] = new_ratings[i]
 
 
 def get_average_of_column(table, index):

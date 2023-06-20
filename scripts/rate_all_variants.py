@@ -4,7 +4,7 @@ from datetime import datetime
 from whr import whole_history_rating
 from whr.utils import test_stability
 from hanabdata.process_games import get_players_with_x_games
-from hanabdata.tools.rating import Leaderboard, get_average_of_column
+import hanabdata.tools.rating as rating
 from hanabdata.tools.structures import GamesIterator
 from hanabdata.tools.io.read import write_ratings, read_csv
 from hanabdata.tools.restriction import get_standard_restrictions, has_winning_score
@@ -23,13 +23,14 @@ SUGGESTED_MU = 33.6
 # for 5p,
 # SUGGESTED_MU = 47.5
 
-def get_ratings(avg=73.6, restriction=get_standard_restrictions(NUM_PLAYERS), run=1):
+def get_ratings(avg=73.6, restriction=get_standard_restrictions(), run=1):
     """Implements this module."""
-    lb = LBSoloEnvironment(draw_probability=0.0)
-    file_infix = f"_beta"
-    lb.set_variant_rating(avg, modify_beta=True)
+    # lb = rating.Leaderboard(TEAM_SIZES, variant_mu=avg)
+    lb = rating.MatchPointLB(draw_probability=0.8)
+    file_infix = "_mp"
+    # lb.set_variant_rating(avg, modify_beta=True)
     try:
-        lb.set_variants(_read_csv(f"./data/processed/ratings/variants{file_infix}{run}.csv"))
+        lb.set_variants(read_csv(f"./data/processed/ratings/variants{file_infix}{run}.csv"))
     except FileNotFoundError:
         print(f"No file found on run {run}.")
     gi = GamesIterator(oldest_to_newest=True)
@@ -45,7 +46,7 @@ def get_ratings(avg=73.6, restriction=get_standard_restrictions(NUM_PLAYERS), ru
             continue
         if game["options"]["numPlayers"] not in TEAM_SIZES:
             continue
-        v = (game["options"]["variantName"], game["options"]["numPlayers"])
+        # v = (game["options"]["variantName"], game["options"]["numPlayers"])
         players = game["playerNames"]
         # valid_games += 1
 
@@ -63,9 +64,9 @@ def get_ratings(avg=73.6, restriction=get_standard_restrictions(NUM_PLAYERS), ru
 
         if has_winning_score(game):
             # total_wins += 1
-            lb.update(v, players, won=True, update_var=True)
+            lb.update_and_rate(game, won=True)
         else:
-            lb.update(v, players, won=False, update_var=True)
+            lb.update_and_rate(game, won=False)
 
         # if i > 100000:
         #     break
@@ -87,7 +88,7 @@ def get_ratings(avg=73.6, restriction=get_standard_restrictions(NUM_PLAYERS), ru
     # print(f"Total winrate is {total_wins / valid_games}.")
     print(f"Saved ratings with variant mu = {avg} to file.")
 
-    write_ratings(f"tracked_players", [[player] + player_info[player] for player in TRACKED_PLAYERS])
+    write_ratings("tracked_players", [[player] + player_info[player] for player in TRACKED_PLAYERS])
     write_ratings(f"users{file_infix}{run+1}", lb.get_users())
     write_ratings(f"variants{file_infix}{run+1}", lb.get_variants())
     return lb.get_variants(), lb.get_users()
@@ -98,10 +99,10 @@ def print_ratings():
 
 def find_appropriate_defaults(how_long: int, step_weight=1.99, margin_of_error=0.1, search=True):
     """Searches for an appropriate default lb.variant_mu value."""
-    current_error, current_avg, i = 100.0, SUGGESTED_MU, 11
+    current_error, current_avg, i = 100.0, SUGGESTED_MU, 0
     while i < how_long:
         variant_table, _ = get_ratings(avg=current_avg, run=i)
-        current_avg = get_average_of_column(variant_table, 3)
+        current_avg = rating.get_average_of_column(variant_table, 3)
         # current_error = current_avg - mu
         # if abs(current_error) < margin_of_error:
         #     break
@@ -232,7 +233,7 @@ def save_rating_to_file(ratings, var_set, run=3):
     write_ratings(f"variants_whr{run}", variants_table[::-1])
 
 if __name__ == "__main__":
-    print(find_appropriate_defaults(12, search=False))
+    print(find_appropriate_defaults(1, search=False))
     # sys.setrecursionlimit(200000) <- causes Segmentation faults
     # save_whr(10 * 60 * 60)
 
