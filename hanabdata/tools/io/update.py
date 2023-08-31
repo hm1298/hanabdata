@@ -94,6 +94,55 @@ def update_chunk(chunk_number: int, exceptional_ids=None, exclude=True, end_on_e
             current, num_updated = datetime.now(), 0
     read.write_games_to_chunk(games_dict, chunk_number)
 
+def update_chunk2(chunk_number: int, exceptional_ids=None, exclude=True, end_on_error=False):
+    """Updates all games and metagames in a chunk."""
+    print(f"Updating games between {chunk_number * 1000} and",
+        f"{chunk_number * 1000 + 999}.")
+    current, num_updated = datetime.now(), 0
+    if exceptional_ids is None:
+        exceptional_ids = []
+
+    ids = []
+    for i in range(1000 * (chunk_number + 1), 1000 * chunk_number, -1):
+        game_id = i - 1
+        if exclude:
+            # inefficient
+            if game_id not in exceptional_ids:
+                ids.append(game_id)
+        else:
+            # inefficient
+            if game_id in exceptional_ids:
+                ids.append(game_id)
+
+    meta_ids = ids[::]
+
+    games_dict = read.read_games_from_chunk(ids, ids[-1] // 1000)
+    meta_dict = read.read_games_from_chunk(meta_ids, meta_ids[-1] // 1000, meta=True)
+    for game_id, game in games_dict.items():
+        if game is None:
+            response = fetch.fetch_game(game_id)
+            if end_on_error and response == "Error":
+                read.write_games_to_chunk(games_dict, chunk_number)
+                print(f"Stopped downloading after nonexistent game {game_id}.")
+                return "Please stop"
+            games_dict[game_id] = response
+
+            response2 = fetch.fetch_metagame(game_id, games_dict[game_id]["players"][0])
+            if end_on_error and response2 == "Error":
+                read.write_games_to_chunk(meta_dict, chunk_number, meta=True)
+                print(f"Stopped downloading after nonexistent metadata for game {game_id}.")
+                return "Please stop"
+            meta_dict[game_id] = response2
+
+            num_updated += 1
+        if (datetime.now() - current).total_seconds() > 20:
+            print(f"Fetched game with ID {game_id}, update number {num_updated}",
+                "in this chunk since last print message.")
+            current, num_updated = datetime.now(), 0
+    read.write_games_to_chunk(games_dict, chunk_number)
+    read.write_games_to_chunk(meta_dict, chunk_number, meta=True)
+
+
 def update_metagames(username: str):
     """Iterates over chunks based on ids."""
     try:

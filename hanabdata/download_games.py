@@ -1,7 +1,7 @@
 """Downloads games."""
 
 from hanabdata.tools.io.read import get_file_names
-from hanabdata.tools.io.update import update_game, update_chunk
+from hanabdata.tools.io.update import update_game, update_chunk2
 from hanabdata.tools.structures import Chunk
 def download(game_id: int):
     """Downloads game."""
@@ -10,7 +10,7 @@ def download(game_id: int):
 def download_all(game_id: int, stop=False):
     """Downloads all games starting from game_id."""
     chunk = game_id // 1000
-    while update_chunk(chunk, end_on_error=stop) is None:
+    while update_chunk2(chunk, end_on_error=stop) is None:
         chunk += 1
 
 def download_new():
