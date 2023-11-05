@@ -119,19 +119,24 @@ def update_chunk2(chunk_number: int, exceptional_ids=None, exclude=True, end_on_
     games_dict = read.read_games_from_chunk(ids, ids[-1] // 1000)
     meta_dict = read.read_games_from_chunk(meta_ids, meta_ids[-1] // 1000, meta=True)
     for game_id, game in games_dict.items():
+        exit_loop = False
         if game is None:
             response = fetch.fetch_game(game_id)
             if end_on_error and response == "Error":
-                read.write_games_to_chunk(games_dict, chunk_number)
                 print(f"Stopped downloading after nonexistent game {game_id}.")
-                return "Please stop"
+                exit_loop = True
+                break
             games_dict[game_id] = response
 
+            if response == "Error":
+                print("Unable to access metadata for game {game_id}.")
+                exit_loop = True
+                break
             response2 = fetch.fetch_metagame(game_id, games_dict[game_id]["players"][0])
             if end_on_error and response2 == "Error":
-                read.write_games_to_chunk(meta_dict, chunk_number, meta=True)
                 print(f"Stopped downloading after nonexistent metadata for game {game_id}.")
-                return "Please stop"
+                exit_loop = True
+                break
             meta_dict[game_id] = response2
 
             num_updated += 1
@@ -139,8 +144,12 @@ def update_chunk2(chunk_number: int, exceptional_ids=None, exclude=True, end_on_
             print(f"Fetched game with ID {game_id}, update number {num_updated}",
                 "in this chunk since last print message.")
             current, num_updated = datetime.now(), 0
+        if exit_loop:
+            break
     read.write_games_to_chunk(games_dict, chunk_number)
     read.write_games_to_chunk(meta_dict, chunk_number, meta=True)
+    if exit_loop:
+        return "Please stop"
 
 
 def update_metagames(username: str):
