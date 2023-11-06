@@ -12,7 +12,7 @@ def update_user(username: str, download_games=True):
         prior_data = structures.User.load(username).data
         start = prior_data[0]['id'] + 1
         print(f'Found prior data containing {len(prior_data)} games')
-    except LookupError:
+    except structures.DatabaseError:
         prior_data = []
         start = 0
         print('No prior data found')
