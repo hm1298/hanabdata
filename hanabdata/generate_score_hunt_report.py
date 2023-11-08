@@ -16,7 +16,7 @@ def generate_score_hunt_report():
         "avg attempts"
     ]]
     for user in users:
-        hunts.append(_report_helper(user, new_report=True))
+        hunts.append(_report_helper(user, new_report=False))
     ScoreHuntData(hunts, "(Individual Summary)").save()
 
 def _report_helper(user, new_report=False, data=None):
@@ -37,11 +37,10 @@ def _report_helper(user, new_report=False, data=None):
 
     # checks all games in data and creates statistics
     for game_summary in hunt_iter:
-        if not bool(game_summary[2]):
-            continue
-        num_variants += 1
-        avg_duration += float(game_summary[3])
-        avg_attempts += int(game_summary[4])
+        if game_summary[2] == "True":
+            num_variants += 1
+            avg_duration += float(game_summary[3])
+            avg_attempts += int(game_summary[4])
 
     if num_variants == 0:
         avg_duration = 999999
@@ -128,4 +127,4 @@ def alphabetize(player1, player2):
     return player1, player2
 
 if __name__ == '__main__':
-    score_hunt_for_teams()
+    generate_score_hunt_report()
