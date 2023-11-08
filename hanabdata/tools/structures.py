@@ -207,6 +207,14 @@ class GamesIterator:
             self.index += 1
             if self.is_valid(game):
                 return game
+            try:  # fix current storage issues
+                game = game[0]
+            except TypeError:
+                continue
+            except IndexError:
+                continue
+            if self.is_valid(game):
+                return game
             
 class ScoreHuntData(Data):
     extension = 'csv'
