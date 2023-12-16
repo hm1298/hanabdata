@@ -3,6 +3,8 @@
 from hanabdata.tools.io.read import get_file_names
 from hanabdata.tools.io.update import update_game, update_chunk2
 from hanabdata.tools.structures import Chunk
+
+
 def download(game_id: int):
     """Downloads game."""
     update_game(game_id)
@@ -36,4 +38,4 @@ def get_last_game():
 
 if __name__ == '__main__':
     #print(f"Downloading all new games, starting from {get_last_game() + 1}.")
-    download_all(1054999)
+    download_all(1073999)

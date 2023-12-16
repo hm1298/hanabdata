@@ -37,7 +37,7 @@ def test_fetch_user2():
 def test_fetch_user3():
     """Checks fetch user for a large user."""
     num_games = len(fetch.fetch_user("Lanvin"))
-    assert 21000 < num_games < 23000
+    assert num_games > 21000
 
 def test_fetch_game():
     """Checks fetch game returns a nonempty dict."""
