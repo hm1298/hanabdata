@@ -39,9 +39,9 @@ def score_streak_analysis(variants=None):
 
 
 if __name__ == "__main__":
-    info = score_streak_analysis()["All Variants"]
-    table = [["All Variants, no 2p", "Current Streak", "Longest Streak"]]
-    file_path = './data/processed/score_streaks/all_variants_no_2p.csv'
+    info = score_streak_analysis(["Clue Starved (5 Suits)"])["Clue Starved (5 Suits)"]
+    table = [["Clue Starved, no 2p", "Current Streak", "Longest Streak"]]
+    file_path = './data/processed/score_streaks/clue_starved_no_2p.csv'
     for user, num_games in info.items():
         table.append([user, num_games[0], num_games[1]])
     write_csv(file_path, table)
