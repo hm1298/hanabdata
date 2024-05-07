@@ -3,6 +3,7 @@
 from hanabdata.tools.restriction import get_standard_restrictions, has_winning_score
 from hanabdata.tools.io.read import write_csv
 from hanabdata.tools.structures import  GamesIterator
+from hanabdata.game.variants import get_variant_names_dict
 
 def score_streak_analysis(variants=None):
     """_summary_"""
@@ -15,8 +16,8 @@ def score_streak_analysis(variants=None):
     for game in gi:
         if not res.validate(game):
             continue
-        if game["options"]["numPlayers"] == 2:
-            continue
+        # if game["options"]["numPlayers"] != 2:
+        #     continue
         curr_variant = game["options"]["variantName"]
         if not variants:
             curr_variant = "All Variants"
@@ -39,9 +40,22 @@ def score_streak_analysis(variants=None):
 
 
 if __name__ == "__main__":
-    info = score_streak_analysis(["Clue Starved (5 Suits)"])["Clue Starved (5 Suits)"]
-    table = [["Clue Starved, no 2p", "Current Streak", "Longest Streak"]]
-    file_path = './data/processed/score_streaks/clue_starved_no_2p.csv'
+    all_variants = list(get_variant_names_dict().keys())
+    var_to_results = score_streak_analysis(all_variants)
+    info = var_to_results["No Variant"]
+    print("got data")
+
+    count = 0
+    good_vars = []
+    for variant, data in var_to_results.items():
+        if max(data.values(), key=lambda tup: tup[1])[1] > 6:
+            count += 1
+            good_vars.append(variant)
+    print(count, "good variants")
+    print(*good_vars, sep="\n")
+
+    table = [["No Variant", "Current Streak", "Longest Streak"]]
+    file_path = './data/processed/score_streaks/no_variant.csv'
     for user, num_games in info.items():
         table.append([user, num_games[0], num_games[1]])
     write_csv(file_path, table)

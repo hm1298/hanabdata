@@ -38,4 +38,4 @@ def get_last_game():
 
 if __name__ == '__main__':
     #print(f"Downloading all new games, starting from {get_last_game() + 1}.")
-    download_all(1087000)
+    download_all(1158000)
