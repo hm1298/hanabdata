@@ -10,6 +10,7 @@ from hanabdata.tools.io.fetch import MAX_TIME
 
 VARIANT_URL = "https://raw.githubusercontent.com/Hanabi-Live/hanabi-live/main/packages/game/src/json/variants.json"
 VARIANT_PATH = './data/assets/variants.json'
+DELETED_VARIANTS = {"Synesthesia & Dark Brown (4 Suits)", "Synesthesia & Gray (4 Suits)", "Synesthesia & Dark Null (4 Suits)", "Synesthesia & Black (4 Suits)", "Synesthesia & Dark Rainbow (4 Suits)"}
 
 
 class VariantJSON(json.JSONEncoder):
@@ -81,6 +82,8 @@ def find_variant_from_name(variant_name):
 
     if variant_name in VARIANT_NAMES_DICT:
         correct_variant = VARIANT_NAMES_DICT[variant_name]
+    elif variant_name in DELETED_VARIANTS:
+        return Variant(None, None, [])
     else:
         update_variants()
         # throws an Error if variant_name does not exist
