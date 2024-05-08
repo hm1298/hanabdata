@@ -8,7 +8,7 @@ import requests
 from hanabdata.tools.io.fetch import MAX_TIME
 
 
-VARIANT_URL = "https://raw.githubusercontent.com/Hanabi-Live/hanabi-live/main/packages/data/src/json/variants.json"
+VARIANT_URL = "https://raw.githubusercontent.com/Hanabi-Live/hanabi-live/main/packages/game/src/json/variants.json"
 VARIANT_PATH = './data/assets/variants.json'
 
 
