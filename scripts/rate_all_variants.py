@@ -9,16 +9,16 @@ from hanabdata.tools.structures import GamesIterator
 from hanabdata.tools.io.read import write_ratings, read_csv
 from hanabdata.tools.restriction import get_standard_restrictions, has_winning_score
 
-NUM_PLAYERS = 2
+NUM_PLAYERS = 3
 TEAM_SIZES = [2, 3, 4, 5, 6]
 DAY_ZERO = datetime.fromisoformat("2018-01-18T01:53:29Z").date()
-TRACKED_PLAYERS = ["mgold", "hallmark", "sodiumdebt", "Lanvin", "HelanaAshryvr", "Fafrd", "a-real-pickle"]
+TRACKED_PLAYERS = ["spring", "yagami_black", "piper", "Lanvin", "HelanaAshryvr", "MarkusKahlsen", "TimeHoodie", "gabio"]
 BLOCKED_PLAYERS = ["Carunty", "FrancisFok"]
 UPDATE_IN_DAYS = 7
 # for 2p,
-SUGGESTED_MU = 31.0
+# SUGGESTED_MU = 31.0
 # for 3p,
-# SUGGESTED_MU = 33.6
+SUGGESTED_MU = 33.6
 # for 4p,
 # SUGGESTED_MU = 36.3
 # for 5p,
@@ -26,9 +26,9 @@ SUGGESTED_MU = 31.0
 
 def get_ratings(avg=SUGGESTED_MU, restriction=get_standard_restrictions(NUM_PLAYERS), run=1):
     """Implements this module."""
-    lb = rating.LBEnvironment(mu=avg)
+    lb = rating.LBSoloEnvironment(mu=avg)
     # lb = rating.MatchPointLB(draw_probability=0.8)
-    file_infix = "_iter_2p_bare"
+    file_infix = "_iter_new_2p_"
     # lb.set_variant_rating(avg, modify_beta=True)
     try:
         prev_file = f"./data/processed/ratings/variants{file_infix}{run}.csv"
@@ -238,7 +238,7 @@ def save_rating_to_file(ratings, var_set, run=3):
     write_ratings(f"variants_whr{run}", variants_table[::-1])
 
 if __name__ == "__main__":
-    print(find_appropriate_defaults(10, search=False))
+    print(find_appropriate_defaults(4, search=False))
     # sys.setrecursionlimit(200000) <- causes Segmentation faults
     # save_whr(10 * 60 * 60)
 
