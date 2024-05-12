@@ -70,6 +70,8 @@ def find_variant(variant_id):
 
     if variant_id in VARIANT_DICT:
         correct_variant = VARIANT_DICT[variant_id]
+    elif variant_id in DELETED_VARIANTS:
+        return Variant(None, None, [0] * 4)
     else:
         update_variants()
         # throws an Error if variant_id does not exist
@@ -83,7 +85,7 @@ def find_variant_from_name(variant_name):
     if variant_name in VARIANT_NAMES_DICT:
         correct_variant = VARIANT_NAMES_DICT[variant_name]
     elif variant_name in DELETED_VARIANTS:
-        return Variant(None, None, [])
+        return Variant(None, None, [0] * 4)
     else:
         update_variants()
         # throws an Error if variant_name does not exist
