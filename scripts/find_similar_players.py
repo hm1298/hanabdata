@@ -74,5 +74,35 @@ def process_for_seeds(restriction, stop_short=9**9):
     # may later wish to include analysis of deck but currently unused
     return seed_to_games, seed_to_deck
 
+def process_for_players(seed_to_games):
+    """docstring"""
+    player_to_player_to_scores = {}
+    memory = []
+    for games in seed_to_games.items():
+        # only interested in seeds with multiple games
+        if len(games) == 1:
+            continue
+        gi = iter(games)
+        prev = next(gi)
+        num_players = len(prev[1])
+        for curr in gi:
+            for i in range(min(curr, prev)):
+                player = curr[1][i % num_players]
+                if equal_actions(curr[0][i], prev[0][i]):
+                    try:
+                        memory[i].append(player)
+                    except IndexError:
+                        former = prev[1][i % num_players]
+                        memory.append([former, player])
+                # deal with updating dict and removing from memory
+            prev = curr
+    return player_to_player_to_scores
+
+def equal_actions(a, b):
+    """docstring"""
+    return a["type"] == b["type"] and \
+        a["target"] == b["target"] and \
+        a["value"] == b["value"]
+
 if __name__ == "__main__":
     main()
