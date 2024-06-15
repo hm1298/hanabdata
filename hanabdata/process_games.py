@@ -93,11 +93,11 @@ def update_players(req_num_games: int):
         if (datetime.now() - current).total_seconds() > 20:
             print(f"Updated metagame data for {num_updates} players.")
             current = datetime.now()
-        update_user(player)
+        update_user(player, download_games=False)
         num_updates += 1
 
 if __name__ == '__main__':
     get_player_and_seed_info()
     analyze_info("player")
     analyze_info("seed")
-    # update_players(100)
+    # update_players(1000)

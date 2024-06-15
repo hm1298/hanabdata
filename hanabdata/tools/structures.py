@@ -260,6 +260,15 @@ class FullGamesIterator:
                     raise StopIteration from e
             game = self.current[self.index]
             meta = self.currentmeta[self.index]
+            try:
+                sp = game["options"]["startingPlayer"]
+                game["startingPlayer"] = sp
+            except TypeError:
+                pass
+            except KeyError:
+                pass
+            except IndexError:
+                pass
             self.index += 1
             if self.is_valid(game) and self.is_valid(meta):
                 return game | meta
@@ -269,13 +278,7 @@ class FullGamesIterator:
                 continue
             except IndexError:
                 continue
-            if self.is_valid(game) and self.is_valid(meta):
-                return game | meta
-            try:  # fix current storage issues
-                game = game[0]
-            except TypeError:
-                continue
-            except IndexError:
+            except KeyError:
                 continue
             if self.is_valid(game) and self.is_valid(meta):
                 return game | meta

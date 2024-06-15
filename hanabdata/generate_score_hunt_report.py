@@ -16,7 +16,7 @@ def generate_score_hunt_report():
         "avg attempts"
     ]]
     for user in users:
-        hunts.append(_report_helper(user, new_report=False))
+        hunts.append(_report_helper(user, new_report=True))
     ScoreHuntData(hunts, "(Individual Summary)").save()
 
 def _report_helper(user, new_report=False, data=None):
