@@ -97,6 +97,8 @@ def update_players(req_num_games: int):
         num_updates += 1
 
 if __name__ == '__main__':
+    update_user("hallmark", download_games=False)
+    update_user("maddy", download_games=False)
     get_player_and_seed_info()
     analyze_info("player")
     analyze_info("seed")
