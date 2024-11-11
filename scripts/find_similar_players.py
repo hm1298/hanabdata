@@ -3,6 +3,8 @@ This script finds players who take similar actions in identical
 gamestates.
 """
 
+import datetime
+from scipy.stats import binomtest
 import json
 from tqdm import tqdm
 from hanabdata.tools import structures
@@ -18,6 +20,9 @@ def main():
     # sort each list by game actions
     res = get_standard_restrictions()
     del res.necessary_constraints["numTurns"]
+    res.necessary_constraints["datetimeStarted"] = "2024-01-01T00:00:00Z"
+    res.add_greater_than("datetimeStarted")
+
     seed_to_games, _ = process_for_seeds(res)
     print(len(seed_to_games))
     print(sum(len(x) for x in seed_to_games.values()))
@@ -25,14 +30,33 @@ def main():
     # count the total number of games played, the number of matching gamestates, the number of matching gamestates with similar action chosen (clue<->clue, play<->play), the number of matching gamestates with identical action chosen, the number of matching gamestates with any clue chosen, and the number of matching gamestates with identical clue chosen
     print("starting")
     result = process_for_players(seed_to_games)
-    result = filter_data(result, 100)
+    result = filter_data(result, 20)
     print(sum(len(x) for x in result))
     table = parse_data(result)
 
     # save to file
-    write_csv("data/processed/seeds/similar_players.csv", table)
+    write_csv("data/processed/seeds/similar_players_2024.csv", table)
 
     print("done")
+
+# TODO: implement
+def find_similarity(player0, player1, restriction):
+    """finds similarity among dl'ed games for 2 players"""
+    gi = structures.FullGamesIterator()
+
+    seed_to_games = [{}, {}]
+    for game in tqdm(gi, total=1100000):
+        players = game["players"]
+        valid0, valid1 = player0 in players, player1 in players
+        if valid0 == valid1:
+            continue
+
+        if not restriction.validate(game):
+            continue
+
+        seed = game["seed"]
+        if valid0 and seed in seed_to_games[0]:
+            continue
 
 def process_for_seeds(restriction, stop_short=9**9):
     """docstring"""
@@ -73,7 +97,6 @@ def process_for_seeds(restriction, stop_short=9**9):
         if count > stop_short:
             break
 
-    # pylint: disable=consider-using-dict-items
     for seed in tqdm(seed_to_games):
         parsed = []
         for actions, *suffix in sorted(seed_to_games[seed]):
@@ -184,20 +207,40 @@ def filter_data(data, limit):
             counts = data[key1][key2]
             if counts[0] < limit:
                 continue
-            result[key1][key2] = (*counts, counts[1] / counts[0])
+            result[key1][key2] = tuple(counts)
         if len(result[key1]) == 0:
             del result[key1]
     return result
 
 def parse_data(data):
     """docstring"""
-    header = ["Player 1", "Player 2", "Total Identical Gamestates", "Total Identical Actions", "Quotient"]
+    header = ["Player 1",
+              "Player 2",
+              "Total Identical Gamestates",
+              "Total Identical Actions",
+              "Similarity",
+              "95% Confidence LB",
+              "95% Confidence UB",
+              "99.5% Confidence LB",
+              "99.5% Confidence UB"]
     table = [header]
     for player1 in data:
         for player2 in data[player1]:
             if player1 < player2:
                 continue
-            row = [player1, player2, *data[player1][player2]]
+            sample_size, successful_trials = data[player1][player2]
+            result = binomtest(k=successful_trials, n=sample_size)
+            ci95 = result.proportion_ci(method='wilsoncc')
+            ci995 = result.proportion_ci(confidence_level=0.995, method='wilsoncc')
+            row = [player1,
+                   player2,
+                   sample_size,
+                   successful_trials,
+                   result.statistic,
+                   ci95.low,
+                   ci95.high,
+                   ci995.low,
+                   ci995.high]
             table.append(row)
 
     return table
