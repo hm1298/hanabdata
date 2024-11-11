@@ -14,7 +14,7 @@ def test_fetch_url1():
 def test_fetch_url2():
     """Checks fetch URL for a medium user."""
     data, errored = fetch.fetch_url(SODIUMDEBT)
-    assert not errored and len(data) > 1400 and len(data) < 1700
+    assert not errored and len(data) > 1700 and len(data) < 3000
 
 def test_fetch_url3():
     """Checks fetch URL for a large user."""
@@ -32,12 +32,12 @@ def test_fetch_user1():
 def test_fetch_user2():
     """Checks fetch user for a medium user."""
     num_games = len(fetch.fetch_user("sodiumdebt"))
-    assert 1400 < num_games < 1700
+    assert 1700 < num_games < 3000
 
 def test_fetch_user3():
     """Checks fetch user for a large user."""
     num_games = len(fetch.fetch_user("Lanvin"))
-    assert 21000 < num_games < 23000
+    assert num_games > 21000
 
 def test_fetch_game():
     """Checks fetch game returns a nonempty dict."""

@@ -37,18 +37,25 @@ def read_json(file_path):
     return data
 
 def write_json(file_path, txt: str):
+    _assert_is_file(file_path)
     with open(file_path, 'w', encoding="utf8") as outfile:
         json.dump(txt, outfile)
 
 def read_csv(file_path):
+    _assert_is_file(file_path)
     with open(file_path, newline='', encoding='utf-8') as csvfile:
         csvreader = csv.reader(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         return list(csvreader)
 
 def write_csv(file_path, data: list):
+    _assert_is_file(file_path)
     with open(file_path, 'w', newline='', encoding='utf-8') as csvfile:
         csvwriter = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         csvwriter.writerows(data)
+
+def _assert_is_file(file_path):
+    if path.exists(file_path):
+        assert path.isfile(file_path)
 
 # functions which might be deprecated in the future
 
@@ -68,8 +75,12 @@ def get_users():
 def get_game_ids():
     """Returns a list of game IDs from the old format."""
     return get_file_names("./data/raw/games")
-   
+
 # functions which should be deprecated in the future
+
+def write_ratings(type_of_entries, data):
+    file_path = f"data/processed/ratings/{type_of_entries}.csv"
+    write_csv(file_path, data)
 
 def read_games_from_chunk(games: list, chunk: int, meta=False):
     """Assumes games is sorted reverse chronologically.

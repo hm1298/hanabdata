@@ -106,16 +106,21 @@ def fetch_game(game_id: int):
     endpoint = f'https://hanabi.live/export/{game_id}'
     return _fetch_url_or_error(endpoint)
 
+def fetch_metagame(game_id: int, username: str):
+    """Fetches a game's metagame info. Raises error if unable."""
+    endpoint = f'https://hanab.live/api/v1/history-full/{username}?start={game_id}&end={game_id}'
+    return _fetch_url_or_error(endpoint)
+
 def fetch_games_threaded(game_ids: list):
     """Creates a thread for each game and fetches them.
-    
+
     Returns a dictionary of the games (key = game id, val = game data)
     along with a list of IDs for which the requests failed.
     """
     MAX_THREADS = 1000
     if len(game_ids) > MAX_THREADS:
-        print(f"Don't overloaf the server by submitting more than {MAX_THREADS} games at once!")
-        return 
+        print(f"Don't overload the server by submitting more than {MAX_THREADS} games at once!")
+        return LookupError
     games_dict = {}
     failed = []
     for game_id in game_ids:

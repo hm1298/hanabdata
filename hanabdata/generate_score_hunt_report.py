@@ -4,8 +4,8 @@ then creates a CSV report of each user's overall stats.
 
 from hanabdata.score_hunt import analyze_2P_score_hunt, ScoreHunt
 from hanabdata.tools.restriction import get_standard_restrictions
-from hanabdata.tools.io.read import get_score_hunt, get_users, \
-    write_score_hunt_summary, read_user
+from hanabdata.tools.io.read import get_users
+from hanabdata.tools.structures import User, ScoreHuntData
 
 def generate_score_hunt_report():
     """Takes average for each user in score hunt. Creates CSV."""
@@ -17,7 +17,7 @@ def generate_score_hunt_report():
     ]]
     for user in users:
         hunts.append(_report_helper(user, new_report=True))
-    write_score_hunt_summary(hunts)
+    ScoreHuntData(hunts, "(Individual Summary)").save()
 
 def _report_helper(user, new_report=False, data=None):
     """Finds the averages """
@@ -25,7 +25,7 @@ def _report_helper(user, new_report=False, data=None):
     while not data:
         if new_report:
             analyze_2P_score_hunt(user)
-        data = get_score_hunt(user)
+        data = ScoreHuntData.load(user)
         if data is None:
             analyze_2P_score_hunt(user)
             continue
@@ -37,11 +37,10 @@ def _report_helper(user, new_report=False, data=None):
 
     # checks all games in data and creates statistics
     for game_summary in hunt_iter:
-        if not bool(game_summary[2]):
-            continue
-        num_variants += 1
-        avg_duration += float(game_summary[3])
-        avg_attempts += int(game_summary[4])
+        if game_summary[2] == "True":
+            num_variants += 1
+            avg_duration += float(game_summary[3])
+            avg_attempts += int(game_summary[4])
 
     if num_variants == 0:
         avg_duration = 999999
@@ -59,11 +58,13 @@ def score_hunt_for_teams():
     # score_hunts = {user: get_score_hunt(user) for user in users}
     print("Got score hunts")
     for user in users:
-        data = read_user(user)
+        data = User.load(user).data
         teammates = {}
         for game in data:
             for player in game["playerNames"]:
                 if player == user or game["options"]["numPlayers"] != 2:
+                    continue
+                if player not in users:
                     continue
                 if player not in teammates:
                     teammates[player] = 1
@@ -88,7 +89,7 @@ def score_hunt_for_teams():
         sh = ScoreHunt(dummy_func)
         sh.set_filter(restriction)
         try:
-            sh.add_data(reversed(read_user(team[0])))
+            sh.add_data(reversed(User.load(team[0]).data))
         except FileNotFoundError:
             print(f"Couldn't find user {team[0]}. Omitting team {team} and continuing..")
             continue
@@ -101,7 +102,7 @@ def score_hunt_for_teams():
         #         table.pop(index)
 
         hunts.append(_report_helper(team, data=table))
-    write_score_hunt_summary(hunts)
+    ScoreHuntData(hunts, "(Team Summary)").save()
 
 def not_first_win(game_id, variant, score_hunt1, score_hunt2):
     """Returns True or False."""
@@ -126,4 +127,4 @@ def alphabetize(player1, player2):
     return player1, player2
 
 if __name__ == '__main__':
-    score_hunt_for_teams()
+    generate_score_hunt_report()

@@ -1,34 +1,54 @@
 """Iterates through all available metadata in preprocessed/games."""
 
 from datetime import datetime
-import sys
 from whr import whole_history_rating
 from whr.utils import test_stability
 from hanabdata.process_games import get_players_with_x_games
-from hanabdata.tools.rating import Leaderboard, get_average_of_column
-from hanabdata.tools.io.read import GamesIterator, write_ratings, _read_csv
+import hanabdata.tools.rating as rating
+from hanabdata.tools.structures import GamesIterator
+from hanabdata.tools.io.read import write_ratings, read_csv
 from hanabdata.tools.restriction import get_standard_restrictions, has_winning_score
 
-
+NUM_PLAYERS = 3
+TEAM_SIZES = [2, 3, 4, 5, 6]
 DAY_ZERO = datetime.fromisoformat("2018-01-18T01:53:29Z").date()
-NUM_PLAYERS = 2
-SUGGESTED_MU = 33.99609022761532
+TRACKED_PLAYERS = ["spring", "yagami_black", "piper", "Lanvin", "HelanaAshryvr", "MarkusKahlsen", "TimeHoodie", "gabio"]
+BLOCKED_PLAYERS = ["Carunty", "FrancisFok"]
+UPDATE_IN_DAYS = 7
+# for 2p,
+# SUGGESTED_MU = 31.0
+# for 3p,
+SUGGESTED_MU = 33.6
+# for 4p,
+# SUGGESTED_MU = 36.3
+# for 5p,
+# SUGGESTED_MU = 47.5
 
-def get_ratings(avg=73.6, restriction=get_standard_restrictions(), run=1):
+def get_ratings(avg=SUGGESTED_MU, restriction=get_standard_restrictions(NUM_PLAYERS), run=1):
     """Implements this module."""
-    lb = Leaderboard([2, 3, 4, 5, 6], variant_mu=avg)
+    lb = rating.LBSoloEnvironment(mu=avg)
+    # lb = rating.MatchPointLB(draw_probability=0.8)
+    file_infix = "_iter_new_2p_"
     # lb.set_variant_rating(avg, modify_beta=True)
-    # lb.set_variants(_read_csv(f"./data/processed/ratings/variants_iter{run}.csv"))
+    try:
+        prev_file = f"./data/processed/ratings/variants{file_infix}{run}.csv"
+        lb.set_variants(read_csv(prev_file))
+    except FileNotFoundError:
+        print(f"No file found on run {run}.")
     gi = GamesIterator(oldest_to_newest=True)
 
     current = datetime.now()
     # valid_games, total_wins = 0, 0
     # num_games_played = {}
     valid_players = get_players_with_x_games(100)
+    for player in BLOCKED_PLAYERS:
+        valid_players.pop(player, None)
+    player_info = {player: [None] for player in TRACKED_PLAYERS}
+    prev_date = datetime.fromisoformat("2018-01-01T01:00:00Z")
     for i, game in enumerate(gi):
         if not restriction.validate(game):
             continue
-        # if game["options"]["numPlayers"] == 2:
+        # if game["options"]["numPlayers"] not in TEAM_SIZES:
         #     continue
         v = (game["options"]["variantName"], game["options"]["numPlayers"])
         players = game["playerNames"]
@@ -48,12 +68,22 @@ def get_ratings(avg=73.6, restriction=get_standard_restrictions(), run=1):
 
         if has_winning_score(game):
             # total_wins += 1
-            lb.update(v, players, won=True, update_var=True)
+            lb.update_and_rate(v, players, won=True)
         else:
-            lb.update(v, players, won=False, update_var=True)
+            lb.update_and_rate(v, players, won=False)
 
         # if i > 100000:
         #     break
+
+        try:
+            curr_date = datetime.fromisoformat(game["datetimeFinished"])
+        except KeyError as e:
+            print(game)
+            raise e
+        if (curr_date - prev_date).days > UPDATE_IN_DAYS:
+            prev_date = curr_date
+            for player in TRACKED_PLAYERS:
+                player_info[player].append(lb.get_player_ranking(player))
 
         if (datetime.now() - current).total_seconds() > 20:
             print(f"Finished updating ratings for {i} games.")
@@ -62,27 +92,29 @@ def get_ratings(avg=73.6, restriction=get_standard_restrictions(), run=1):
     # print(f"Total winrate is {total_wins / valid_games}.")
     print(f"Saved ratings with variant mu = {avg} to file.")
 
-    write_ratings(f"users_beta{run+1}", lb.get_users())
-    write_ratings(f"variants_beta{run+1}", lb.get_variants())
+    write_ratings("tracked_players", [[player] + player_info[player] for player in TRACKED_PLAYERS])
+    write_ratings(f"users{file_infix}{run+1}", lb.get_users())
+    write_ratings(f"variants{file_infix}{run+1}", lb.get_variants())
     return lb.get_variants(), lb.get_users()
 
 def print_ratings():
     """Outputs stuff to CLI."""
     print(get_ratings())
 
-def find_appropriate_defaults(how_long: int, step_weight=1.99, margin_of_error=0.1, search=True):
+def find_appropriate_defaults(how_long: int, step_weight=1.8, margin_of_error=0.1, search=True):
     """Searches for an appropriate default lb.variant_mu value."""
-    current_error, mu, i = 100.0, SUGGESTED_MU, 0
+    curr_error, curr_avg, i = 100.0, SUGGESTED_MU, 0
+    mu = curr_avg
     while i < how_long:
-        variant_table, _ = get_ratings(avg=mu, run=i)
-        current_avg = get_average_of_column(variant_table, 3)
-        # current_error = current_avg - mu
-        # if abs(current_error) < margin_of_error:
-        #     break
-        # print(f"Updating {mu:.4f} because result {current_avg:.4f} is too far away.")
-        # mu += step_weight * current_error
+        variant_table, _ = get_ratings(avg=curr_avg, run=i)
+        curr_avg = rating.get_average_of_column(variant_table, 3)
+        curr_error = curr_avg - mu
+        if abs(curr_error) < margin_of_error:
+            break
+        print(f"Updating {mu:.4f} because result {curr_avg:.4f} is too far away.")
+        mu += step_weight * curr_error
         i += 1
-    return current_avg
+    return curr_avg
 
 # TODO: put this in a module to help scripts/analyses in general
 def get_player_games(restriction, min_games_played, min_games_to_rank=None):
@@ -206,6 +238,10 @@ def save_rating_to_file(ratings, var_set, run=3):
     write_ratings(f"variants_whr{run}", variants_table[::-1])
 
 if __name__ == "__main__":
-    # print(find_appropriate_defaults(1, search=False))
+    print(find_appropriate_defaults(4, search=False))
     # sys.setrecursionlimit(200000) <- causes Segmentation faults
-    save_whr(10 * 60 * 60)
+    # save_whr(10 * 60 * 60)
+
+# changed set_variants() to use sigma = mu / 3 rather than
+# old sigma, and ending average mu changed from 33.6 over
+# iterations to 34.97 in latest iteration. hmm.

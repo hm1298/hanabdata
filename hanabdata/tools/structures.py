@@ -178,7 +178,7 @@ class GamesIterator:
     def set_current(self):
         """Opens the next file and reads as JSON."""
         self.curr_chunk = chunk_num = self.chunk_list.pop()
-        self.current = Chunk.load(chunk_num)
+        self.current = ChunkMeta.load(chunk_num)
         self.index = 0
 
     def is_valid(self, game):
@@ -207,7 +207,82 @@ class GamesIterator:
             self.index += 1
             if self.is_valid(game):
                 return game
-            
+            try:  # fix current storage issues
+                game = game[0]
+            except TypeError:
+                continue
+            except IndexError:
+                continue
+            if self.is_valid(game):
+                return game
+
+class FullGamesIterator:
+    """Iterates over all games data"""
+    def __init__(self, oldest_to_newest=True):
+        dir_path = ChunkMeta.basepath
+        files1 = {int(y) for y in read.get_file_names(dir_path)}
+        dir_path = Chunk.basepath
+        files2 = {int(y) for y in read.get_file_names(dir_path)}
+        filenames = list(files1 & files2)
+        if oldest_to_newest:
+            self.chunk_list = sorted(filenames, reverse=True)
+        else:
+            self.chunk_list = sorted(filenames)
+
+    def set_current(self):
+        """Opens the next file and reads as JSON."""
+        self.curr_chunk = chunk_num = self.chunk_list.pop()
+        self.currentmeta = ChunkMeta.load(chunk_num)
+        self.current = Chunk.load(chunk_num)
+        self.index = 0
+
+    def is_valid(self, game):
+        """Returns True if a game is valid; False otherwise."""
+        try:
+            game["id"]
+        except TypeError:
+            return False
+        except KeyError:
+            print(f"Possible issue with JSON storage in chunk {self.curr_chunk}.")
+            return False
+        return True
+
+    def __iter__(self):
+        self.set_current()
+        return self
+
+    def __next__(self):
+        while True:
+            if self.index == 1000:
+                try:
+                    self.set_current()
+                except IndexError as e:
+                    raise StopIteration from e
+            game = self.current[self.index]
+            meta = self.currentmeta[self.index]
+            try:
+                sp = game["options"]["startingPlayer"]
+                game["startingPlayer"] = sp
+            except TypeError:
+                pass
+            except KeyError:
+                pass
+            except IndexError:
+                pass
+            self.index += 1
+            if self.is_valid(game) and self.is_valid(meta):
+                return game | meta
+            try:  # fix current storage issues
+                meta = meta[0]
+            except TypeError:
+                continue
+            except IndexError:
+                continue
+            except KeyError:
+                continue
+            if self.is_valid(game) and self.is_valid(meta):
+                return game | meta
+
 class ScoreHuntData(Data):
     extension = 'csv'
     basepath = './data/processed/score_hunts'

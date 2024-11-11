@@ -1,7 +1,8 @@
 """Creates a scorecard for team 1 vs team 2."""
 
 import hanabdata.tools.restriction as res
-from hanabdata.tools.io.read import _write_csv, read_user
+from hanabdata.tools.io.read import write_csv
+from hanabdata.tools.structures import User
 
 def compare_teams(team1: list, team2: list, size=None, save=True, restriction=None):
     """Compares teams."""
@@ -14,7 +15,7 @@ def compare_teams(team1: list, team2: list, size=None, save=True, restriction=No
     if len(team1) != len(team2):
         return
     games = {}
-    for game in read_user(team1[0]):
+    for game in User.load(team1[0]):
         if not restriction.validate(game):
             continue
         if team1 != sorted(game["playerNames"]):
@@ -23,7 +24,7 @@ def compare_teams(team1: list, team2: list, size=None, save=True, restriction=No
             continue
         games[game["seed"]] = game
     valid_games = {}
-    for game in read_user(team2[0]):
+    for game in User.load(team2[0]):
         if not restriction.validate(game):
             continue
         if team2 != sorted(game["playerNames"]):
@@ -34,6 +35,43 @@ def compare_teams(team1: list, team2: list, size=None, save=True, restriction=No
             valid_games[game["seed"]] = [games[game["seed"]], game]
     print(f"{len(valid_games)} games found.")
     info = {"team1": team1, "team2": team2}
+    for _, entry in valid_games.items():
+        score = award_points(entry[0], entry[1])
+        variant = entry[0]["options"]["variantName"]
+        info.setdefault(variant, [0, 0])
+        if score == 0:
+            continue
+        if score < 0:
+            info[variant][1] -= score
+        else:
+            info[variant][0] += score
+    if save:
+        save_to_file(info)
+    return info
+
+def compare_players(player1: str, player2: str, size=None, save=True, restriction=None):
+    """Compares players."""
+    if size is None:
+        size = 2
+    if restriction is None:
+        restriction = res.get_standard_restrictions(size)
+    games = {}
+    for game in User.load(player1):
+        if not restriction.validate(game):
+            continue
+        if game["seed"] == "JSON":
+            continue
+        games[game["seed"]] = game
+    valid_games = {}
+    for game in User.load(player2):
+        if not restriction.validate(game):
+            continue
+        if game["seed"] == "JSON":
+            continue
+        if game["seed"] in games:
+            valid_games[game["seed"]] = [games[game["seed"]], game]
+    print(f"{len(valid_games)} games found.")
+    info = {"team1": player1, "team2": player2}
     for _, entry in valid_games.items():
         score = award_points(entry[0], entry[1])
         variant = entry[0]["options"]["variantName"]
@@ -78,7 +116,8 @@ def save_to_file(info):
         table.append([variant, matchpoints[0], matchpoints[1]])
         header2[1] += matchpoints[0]
         header2[2] += matchpoints[1]
-    _write_csv(file_path, table)
+    write_csv(file_path, table)
 
 if __name__ == "__main__":
-    compare_teams(["hallmark", "sodiumdebt"], ["a-real-pickle", "grubby_cubby"])
+    compare_teams(["hallmark", "sodiumdebt"], ["mgold", "yagami_black"])
+    compare_players("gsymon", "hallmark")

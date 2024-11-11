@@ -88,16 +88,18 @@ def update_players(req_num_games: int):
     """Updates all players with at least req_num_games completed."""
     data = get_players_with_x_games(req_num_games)
     num_updates = 0
-    # current = datetime.now()
+    current = datetime.now()
     for player in data:
-        # if (datetime.now() - current).total_seconds() > 20:
-        #     print(f"Updated metagame data for {num_updates} players.")
-        #     current = datetime.now()
-        update_user(player)
+        if (datetime.now() - current).total_seconds() > 20:
+            print(f"Updated metagame data for {num_updates} players.")
+            current = datetime.now()
+        update_user(player, download_games=False)
         num_updates += 1
 
 if __name__ == '__main__':
+    update_user("hallmark", download_games=False)
+    update_user("maddy", download_games=False)
     get_player_and_seed_info()
     analyze_info("player")
     analyze_info("seed")
-    # update_players(100)
+    # update_players(1000)

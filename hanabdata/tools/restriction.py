@@ -183,6 +183,7 @@ def has_winning_score(game):
     if "score" not in game:
         return False
 
+    variant_id = None
     if "options" in game:
         if "variantID" in game["options"]:
             variant_id = game["options"]["variantID"]

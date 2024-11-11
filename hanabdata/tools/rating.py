@@ -81,6 +81,18 @@ class Leaderboard():
             ])
         return [header] + sorted(table, key=lambda x: -x[3])
 
+    def get_player_ranking(self, player_name):
+        """Returns player ranking among all players in self.users."""
+        if player_name not in self.users:
+            return None
+        player_rating = self.curr_env.expose(self.users[player_name])
+        player_ranking = 1
+        for _, rating in self.users.items():
+            user_rating = self.curr_env.expose(rating)
+            if player_rating < user_rating:
+                player_ranking += 1
+        return player_ranking
+
 
 class LBEnvironment(trueskill.TrueSkill):
     """Environment for storing our ratings."""
@@ -125,9 +137,10 @@ class LBEnvironment(trueskill.TrueSkill):
         csv_iter = iter(table)
         header = next(csv_iter)
         index_mu = header.index("Average")
-        index_sigma = header.index("Variance")
+        # index_sigma = header.index("Variance")
         for line in csv_iter:
-            self.variants[(line[1], int(line[2]))] = self.create_rating(mu=float(line[index_mu]), sigma=float(line[index_sigma]), is_variant=True)
+            line_mu = float(line[index_mu])
+            self.variants[(line[1], int(line[2]))] = self.create_rating(mu=line_mu, sigma=line_mu/3, is_variant=True)
         print("Finished setting variant ratings.")
 
     def get_users(self):
@@ -175,6 +188,18 @@ class LBEnvironment(trueskill.TrueSkill):
 
         return rated_rating_groups
 
+    def get_player_ranking(self, player_name):
+        """Returns player ranking among all players in self.users."""
+        if player_name not in self.users:
+            return None
+        player_rating = self.expose(self.users[player_name])
+        player_ranking = 1
+        for _, rating in self.users.items():
+            user_rating = self.expose(rating)
+            if player_rating < user_rating:
+                player_ranking += 1
+        return player_ranking
+
 
 class LBSoloEnvironment(LBEnvironment):
     """Different "game" definition."""
@@ -183,7 +208,11 @@ class LBSoloEnvironment(LBEnvironment):
         - Variant updates rating based on team game against all players.
         - Each player updates rating based on solo game against variant.
         """
-        variant_rating = self.variants[variant]
+        try:
+            variant_rating = self.variants[variant]
+        except KeyError:
+            self.variants[variant] = self.create_rating(is_variant=True)
+            variant_rating = self.variants[variant]
         player_ratings = [
             self.users.setdefault(
                 player,
@@ -204,8 +233,13 @@ class LBSoloEnvironment(LBEnvironment):
             rated_rating_groups = self.rate(rating_groups, ranks=ranks)
 
             self.users[player] = rated_rating_groups[1][0]
-            if update_var:
-                self.variants[variant] = rated_rating_groups[0][0]
+
+        if update_var:
+            rating_groups = [
+                (variant_rating for _ in player_ratings),
+                tuple(player_ratings)
+            ]
+            self.variants[variant] = rated_rating_groups[0][0]
 
         return rated_rating_groups  # not super useful atm
 
@@ -223,6 +257,49 @@ class LBSoloEnvironment(LBEnvironment):
                 self.expose(rating)
             ])
         return [header] + sorted(table, key=lambda x: -x[5])
+
+
+class MatchPointLB(LBEnvironment):
+    """Leaderboard for users only; no variant ratings tracked.
+
+    Make sure to initialize with large draw_probability. See method
+    MatchPointLB.update_and_rate() for more info.
+    """
+    seeds = {}
+
+    def update_and_rate(self, game, won):
+        """Updates user ratings according to the following rule.
+
+        The team of N players have current ratings. They play a N:...:N
+        free-for-all against all previous players of the seed, using old
+        ratings. A perfect score ensures a first place finish, and a less
+        than perfect score ensures a last place finish. Two teams that
+        both receive a perfect score or both do not receive a perfect
+        score are said to have tied.
+
+        Old player ratings are saved before update from playing the seed.
+        """
+        player_list = game["playerNames"]
+        player_ratings = tuple(
+            self.users.setdefault(
+                player,
+                self.create_rating()
+            ) for player in player_list
+        )
+
+        rank_value = 0 if won else 1
+        ranks, rating_groups = [rank_value], [player_ratings]
+
+        for match in self.seeds.setdefault(game["seed"], []):
+            ranks.append(match[0])
+            rating_groups.append(match[1])
+        self.seeds[game["seed"]].append((rank_value, player_ratings))
+        if len(rating_groups) == 1:
+            return
+
+        new_ratings = self.rate(rating_groups, ranks=ranks)[0]
+        for i, player in enumerate(player_list):
+            self.users[player] = new_ratings[i]
 
 
 def get_average_of_column(table, index):
