@@ -29,7 +29,7 @@ def make_table():
         newline.extend(max(temp[player]))
         ans.append(newline)
 
-    write_csv("data/processed/seeds/lonewins.csv", ans)
+    write_csv("data/processed/seeds/allwins.csv", ans)
 
     return ans
 
@@ -42,8 +42,8 @@ def create_seed_dict(restriction=get_standard_restrictions()):
         seed = game["seed"]
 
         # not interested in seeds won by 2+ teams
-        if seed in multiwin_seeds:
-            continue
+        # if seed in multiwin_seeds:
+        #     continue
 
         # save the identities of all players who have seen the deck.
         # not interested in games where a player has previously seen
@@ -64,15 +64,22 @@ def create_seed_dict(restriction=get_standard_restrictions()):
 
         # interested in seeds won once but not twice
         if has_winning_score(game):
-            if seed in lonewins:
-                del lonewins[seed]
-                multiwin_seeds.add(seed)
-                continue
+            # if seed in lonewins:
+            #     del lonewins[seed]
+            #     multiwin_seeds.add(seed)
+            #     continue
 
-            lonewins[seed] = players
+            lonewins.setdefault(seed, set())
+            lonewins[seed].update([(player, 1) for player in players])
+        else:
+            lonewins.setdefault(seed, set())
+            lonewins[seed].update([(player, 0) for player in players])
 
         # counts all games played before 2nd win "under normal circumstances"
-        seed_to_gc[seed] = seed_to_gc.get(seed, 0) + 1
+        seed_to_gc.setdefault(seed, [0, 0])
+        seed_to_gc[seed][0] += 1
+        if has_winning_score(game):
+            seed_to_gc[seed][1] += 1
 
     return lonewins, seed_to_gc
 
@@ -80,9 +87,9 @@ def create_player_dict(seed_to_players, seed_to_gc):
     """docstring"""
     player_to_lonewins = {}
     for seed, players in tqdm(seed_to_players.items()):
-        num_games = seed_to_gc[seed]
-        for player in players:
-            player_to_lonewins[player] = player_to_lonewins.get(player, []) + [(num_games, seed)]
+        num_games, num_wins = seed_to_gc[seed]
+        for (player, result) in players:
+            player_to_lonewins[player] = player_to_lonewins.get(player, []) + [(num_games, num_wins, seed, result)]
 
     for lonewins in player_to_lonewins.values():
         lonewins.sort()
@@ -97,9 +104,11 @@ def do_cutoff_stuff(player_to_lonewins, cutoffs=None):
     winners = {}
     for player, lonewins in tqdm(player_to_lonewins.items()):
         winners[player] = [0] * len(cutoffs)
-        for (num_games, _) in lonewins:
+        for (num_games, num_wins, _, result) in lonewins:
+            if result == 0:
+                continue
             for i, cutoff in enumerate(cutoffs):
-                if cutoff > num_games:
+                if cutoff > num_games / num_wins:
                     break
                 winners[player][i] += 1
 
@@ -110,8 +119,16 @@ def get_log_sum(player_to_lonewins):
     winners = {}
     for player, lonewins in tqdm(player_to_lonewins.items()):
         winners[player] = 0
-        for (num_games, _) in lonewins:
-            winners[player] += math.log(num_games)
+        for (num_games, num_wins, _, result) in lonewins:
+            if num_wins == 0:
+                continue
+            x = num_wins / num_games
+            if result == 1:
+                winners[player] += -math.log(x)
+            else:
+                if x == 1 or x == 1.0:
+                    continue
+                winners[player] += (x / (1 - x)) * math.log(x)
 
     return winners
 
