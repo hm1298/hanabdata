@@ -41,8 +41,8 @@ def score_streak_analysis(variants=None):
 
 if __name__ == "__main__":
     all_variants = list(get_variant_names_dict().keys())
-    var_to_results = score_streak_analysis(all_variants)
-    info = var_to_results["No Variant"]
+    var_to_results = score_streak_analysis()
+    info = var_to_results["All Variants"]
     print("got data")
 
     count = 0
@@ -54,8 +54,8 @@ if __name__ == "__main__":
     print(count, "good variants")
     print(*good_vars, sep="\n")
 
-    table = [["No Variant", "Current Streak", "Longest Streak"]]
-    file_path = './data/processed/score_streaks/no_variant.csv'
+    table = [["All Variants", "Current Streak", "Longest Streak"]]
+    file_path = './data/processed/score_streaks/all_variants.csv'
     for user, num_games in info.items():
         table.append([user, num_games[0], num_games[1]])
     write_csv(file_path, table)

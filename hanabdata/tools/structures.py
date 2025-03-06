@@ -209,9 +209,7 @@ class GamesIterator:
                 return game
             try:  # fix current storage issues
                 game = game[0]
-            except TypeError:
-                continue
-            except IndexError:
+            except (TypeError, IndexError, KeyError):
                 continue
             if self.is_valid(game):
                 return game
@@ -220,20 +218,17 @@ class FullGamesIterator:
     """Iterates over all games data"""
     def __init__(self, oldest_to_newest=True):
         dir_path = ChunkMeta.basepath
-        files1 = {int(y) for y in read.get_file_names(dir_path)}
-        dir_path = Chunk.basepath
-        files2 = {int(y) for y in read.get_file_names(dir_path)}
-        filenames = list(files1 & files2)
+        files = [int(y) for y in read.get_file_names(dir_path)]
         if oldest_to_newest:
-            self.chunk_list = sorted(filenames, reverse=True)
+            self.chunk_list = sorted(files, reverse=True)
         else:
-            self.chunk_list = sorted(filenames)
+            self.chunk_list = sorted(files)
 
     def set_current(self):
         """Opens the next file and reads as JSON."""
         self.curr_chunk = chunk_num = self.chunk_list.pop()
-        self.currentmeta = ChunkMeta.load(chunk_num)
-        self.current = Chunk.load(chunk_num)
+        self.current = ChunkMeta.load(chunk_num)
+        self.current_raw = Chunk.load(chunk_num)
         self.index = 0
 
     def is_valid(self, game):
@@ -259,29 +254,16 @@ class FullGamesIterator:
                 except IndexError as e:
                     raise StopIteration from e
             game = self.current[self.index]
-            meta = self.currentmeta[self.index]
-            try:
-                sp = game["options"]["startingPlayer"]
-                game["startingPlayer"] = sp
-            except TypeError:
-                pass
-            except KeyError:
-                pass
-            except IndexError:
-                pass
+            raw = self.current_raw[self.index]
             self.index += 1
-            if self.is_valid(game) and self.is_valid(meta):
-                return game | meta
+            if self.is_valid(game) and self.is_valid(raw):
+                return raw | game
             try:  # fix current storage issues
-                meta = meta[0]
-            except TypeError:
+                game = game[0]
+            except (TypeError, IndexError, KeyError):
                 continue
-            except IndexError:
-                continue
-            except KeyError:
-                continue
-            if self.is_valid(game) and self.is_valid(meta):
-                return game | meta
+            if self.is_valid(game) and self.is_valid(raw):
+                return raw | game
 
 class ScoreHuntData(Data):
     extension = 'csv'
